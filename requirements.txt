@@ -1,0 +1,9 @@
+gymnasium==0.29.1
+gym-chess==0.1.1
+keras==2.14.0
+numpy==1.26.0
+chess==1.10.0
+pandas==2.1.1
+matplotlib==3.8.0
+tensorflow==2.14.0
+
