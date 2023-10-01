@@ -164,3 +164,5 @@ cython_debug/
 __pycache__/
 #h5
 *.h5
+#benito logs
+benito/logs/
