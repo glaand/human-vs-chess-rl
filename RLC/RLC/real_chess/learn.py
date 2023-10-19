@@ -3,6 +3,7 @@ import time
 from RLC.real_chess.tree import Node
 import math
 import gc
+from tqdm import tqdm
 
 
 def softmax(x, temperature=1):
@@ -58,6 +59,7 @@ class TD_search(object):
 
         """
         starttime = time.time()
+        pbar = tqdm(total=iters)
         for k in range(iters):
             self.env.reset()
             if k % c == 0:
@@ -66,8 +68,9 @@ class TD_search(object):
             if k > c:
                 self.ready = True
             self.play_game(k, maxiter=maxiter)
-            if starttime + timelimit_seconds < time.time():
-                break
+            #if starttime + timelimit_seconds < time.time():
+            #    break
+            pbar.update(1)
         return self.env.board
 
     def play_game(self, k, maxiter=80):
@@ -140,7 +143,7 @@ class TD_search(object):
             new_state_value = self.agent.predict(sucstate)
 
             error = reward + self.gamma * new_state_value - state_value
-            error = np.float(np.squeeze(error))
+            error = float(np.squeeze(error))
 
             turncount += 1
             if turncount > maxiter and not episode_end:

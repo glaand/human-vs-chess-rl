@@ -7,6 +7,9 @@ from RLC.real_chess import agent, environment, learn, tree
 import chess
 from chess.pgn import Game
 
+import tensorflow as tf
+tf.keras.utils.disable_interactive_logging()
+
 opponent = agent.GreedyAgent()
 env = environment.Board(opponent, FEN=None)
 player = agent.Agent(lr=0.001, network='')
@@ -18,11 +21,16 @@ w_before = learner.agent.model.get_weights()
 
 
 def test_train():
-    learner.learn(iters=11, timelimit_seconds=900)
+    learner.learn(iters=50, timelimit_seconds=900)
 
 
 test_train()
 
 w_after = learner.agent.model.get_weights()
+
+learner.search_time = 60
+pgn = Game.from_board(learner.env.board)
+with open("rlc_pgn","w") as log:
+    log.write(str(pgn))
 
 print("done")

@@ -6,6 +6,9 @@ import os
 from RLC.real_chess import agent, environment, learn, tree
 import chess
 from chess.pgn import Game
+import tensorflow as tf
+
+tf.keras.utils.disable_interactive_logging()
 
 opponent = agent.GreedyAgent()
 env = environment.Board(opponent, FEN=None)
@@ -15,7 +18,7 @@ learner = learn.TD_search(env, player, gamma=0.8, search_time=1.5)
 node = tree.Node(learner.env.board, gamma=learner.gamma)
 
 w_before = learner.agent.model.get_weights()
-n_iters = 105
+n_iters = 1000000
 
 
 
