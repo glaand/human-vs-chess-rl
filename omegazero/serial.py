@@ -7,7 +7,7 @@ import config
 import math
 from tqdm import tqdm
 
-fen_string = "4k3/8/8/7R/8/8/4K3/4R3 w - - 0 1"
+fen_string = "4k3/8/8/7R/8/8/4K3/4R3 b - - 0 1"
 
 def main():
     print("Running omegazero in serial mode")
@@ -28,11 +28,15 @@ def main():
         learn_stage.learn()
         new_player = learn_stage.getOutput()
 
-        evaluate_stage = EvaluateStage(fen_string)
+        evaluate_stage = EvaluateStage(fen_string, episode)
         evaluate_stage.setInput(new_player, best_player)
         evaluate_stage.evaluate(n=config.NUM_OF_EVAL_GAMES, win_quote=config.WIN_QUOTE)
         best_player, metrics = evaluate_stage.getOutput()
         print(f"Episode {episode} - {metrics}")
+        
+        # save metrics to log file
+        with open("log.txt", "a") as f:
+            f.write(f"Episode {episode} - {metrics}\n")
 
         exploration_prob = exploration_prob * math.exp(-(1 - episode / episodes) * episode)
 

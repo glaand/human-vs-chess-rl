@@ -127,74 +127,61 @@ class NNManager():
     def __init__(self, player):
         self.player = player
         self.learning_rate = config.LEARNING_RATE
+        self.net = ChessNet()
+        cuda = torch.cuda.is_available()
+        if cuda:
+            self.net.cuda()
+        self.optimizer = optim.Adam(self.net.parameters(), lr=self.learning_rate, betas=(0.8, 0.999))
+        self.scheduler = optim.lr_scheduler.MultiStepLR(self.optimizer, milestones=[50,100,150,200,250,300,400], gamma=0.77)
+        self.checkpoint = None
+        self.start_epoch = 0
+        if os.path.isfile(self.model_path):
+            self.checkpoint = torch.load(self.model_path)
+            self.net.load_state_dict(self.checkpoint['state_dict'])
+            if self.checkpoint != None:
+                if not (len(self.checkpoint) == 1):
+                    self.start_epoch = self.checkpoint['epoch']
+                    self.optimizer.load_state_dict(self.checkpoint['optimizer'])
+                    self.scheduler.load_state_dict(self.checkpoint['scheduler'])
 
     @property
     def model_path(self):
         if self.player.is_best_player:
             return os.path.join(artifacts_path, "best_player.pth.tar")
-        
         return os.path.join(artifacts_path, "new_player_nn_%s.pth.tar" % self.player.id)
-
-    def learn(self, memory, iteration):
-        net = ChessNet()
-        cuda = torch.cuda.is_available()
-        if cuda:
-            net.cuda()
-        optimizer = optim.Adam(net.parameters(), lr=self.learning_rate, betas=(0.8, 0.999))
-        scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=[50,100,150,200,250,300,400], gamma=0.77)
-        start_epoch = self.load_state(net, optimizer, scheduler)
-        self.train(memory, net, optimizer, scheduler, start_epoch, iteration)
-
-    def load_state(self, net, optimizer, scheduler):
-        """ Loads saved model and optimizer states if exists """
-        start_epoch, checkpoint = 0, None
-        if os.path.isfile(self.model_path):
-            checkpoint = torch.load(self.model_path)
-        if checkpoint != None:
-            if (len(checkpoint) == 1):
-                net.load_state_dict(checkpoint['state_dict'])
-                print("Loaded checkpoint model %s." % self.model_path)
-            else:
-                start_epoch = checkpoint['epoch']
-                net.load_state_dict(checkpoint['state_dict'])
-                optimizer.load_state_dict(checkpoint['optimizer'])
-                scheduler.load_state_dict(checkpoint['scheduler'])
-                print("Loaded checkpoint model %s, and optimizer, scheduler." % self.model_path)    
-        return start_epoch
     
     def predict(self, game_state_tensor):
-        net = ChessNet()
-        cuda = torch.cuda.is_available()
-        if cuda:
-            net.cuda()
-            
-        if os.path.isfile(self.model_path):
-            checkpoint = torch.load(self.model_path)
-            net.load_state_dict(checkpoint['state_dict'])
-
-        net.eval()
-        if cuda:
-            net.cuda()
         with torch.no_grad():
-            preds = net(game_state_tensor)
+            preds = self.net(game_state_tensor)
         return preds
     
-    def train(self, memory, net, optimizer, scheduler, start_epoch, iteration):
+    def learn(self, memory, iteration):
         cuda = torch.cuda.is_available()
-        net.train()
+        self.net.train()
         criterion = AlphaLoss()
+        if cuda:
+            criterion.cuda()
         
         tuple_data = memory.ltmemory_nparray
         state_data = tuple_data[0]
         policy_data = tuple_data[1]
         value_data = tuple_data[2]
+        
+        state_data = torch.tensor(state_data, dtype=torch.float32)
+        policy_data = torch.tensor(policy_data, dtype=torch.float32)
+        value_data = torch.tensor(value_data, dtype=torch.float32)
+        
+        if cuda:
+            state_data = state_data.to('cuda')
+            policy_data = policy_data.to('cuda')
+            value_data = value_data.to('cuda')
+        
         train_set = CustomDataset(state_data, policy_data, value_data)
         train_loader = DataLoader(train_set, batch_size=config.BATCH_SIZE, shuffle=True, num_workers=0, pin_memory=False)
         
         print("Starting training process...")
-        update_size = len(train_loader)//10
-        print("Update step size: %d" % update_size)
-        for epoch in tqdm(range(start_epoch, config.NUM_EPOCHS)):
+        update_size = len(train_loader)//config.UPDATE_SIZE_DIVISOR
+        for epoch in tqdm(range(self.start_epoch, config.NUM_EPOCHS)):
             total_loss = 0.0
             losses_per_batch = []
             for i,data in enumerate(train_loader,0):
@@ -202,27 +189,27 @@ class NNManager():
                 state, policy, value = state.float(), policy.float(), value.float()
                 if cuda:
                     state, policy, value = state.cuda(), policy.cuda(), value.cuda()
-                value_pred, policy_pred = net(state) # policy_pred = torch.Size([batch, 4672]) value_pred = torch.Size([batch, 1])
+                value_pred, policy_pred = self.net(state)
                 loss = criterion(value_pred, value, policy_pred, policy)
                 loss = loss/config.GRADIENT_ACC_STEPS
                 loss.backward()
-                clip_grad_norm_(net.parameters(), config.MAX_NORM)
+                clip_grad_norm_(self.net.parameters(), config.MAX_NORM)
                 if (epoch % config.GRADIENT_ACC_STEPS) == 0:
-                    optimizer.step()
-                    optimizer.zero_grad()
+                    self.optimizer.step()
+                    self.optimizer.zero_grad()
                     
                 total_loss += loss.item()
                 if i % update_size == (update_size - 1):    # print every update_size-d mini-batches of size = batch_size
                     losses_per_batch.append(config.GRADIENT_ACC_STEPS*total_loss/update_size)
                     total_loss = 0.0
             
-            scheduler.step()
+            self.scheduler.step()
             if (epoch % 2) == 0:
                 torch.save({
                         'epoch': epoch + 1,\
-                        'state_dict': net.state_dict(),\
-                        'optimizer' : optimizer.state_dict(),\
-                        'scheduler' : scheduler.state_dict(),\
+                        'state_dict': self.net.state_dict(),\
+                        'optimizer' : self.optimizer.state_dict(),\
+                        'scheduler' : self.scheduler.state_dict(),\
                     }, self.model_path)
             '''
             # Early stopping

@@ -64,8 +64,9 @@ class GameState:
     def allowedActions(self):
         moves = [[x.from_square, x.to_square] for x in self.board.generate_legal_moves()]
         self.action_space = np.zeros((64, 64), dtype=int)
-        from_squares, to_squares = zip(*moves)
-        self.action_space[from_squares, to_squares] = 1
+        if len(moves) > 0:    
+            from_squares, to_squares = zip(*moves)
+            self.action_space[from_squares, to_squares] = 1
         return self.action_space
 
     @property

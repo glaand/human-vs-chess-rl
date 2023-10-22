@@ -5,10 +5,11 @@ from tqdm import tqdm
 from entities.game import Game
 
 class EvaluateStage:
-    def __init__(self, initial_state: str):
+    def __init__(self, initial_state: str, episode):
         self.best_player = None
         self.metrics = None
         self.initial_state = initial_state
+        self.episode = episode
         print("")
         print("=====================")
         print("=  EVALUATE STAGE   =")
@@ -38,7 +39,7 @@ class EvaluateStage:
                 game.setBlackPlayer(self.best_player)
 
             game.playUntilFinished()
-            game.savePGN("eval")
+            game.savePGN(f"eval_{self.episode}")
 
             # get the result
             result = game.gameState.board.result()

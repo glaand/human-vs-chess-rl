@@ -13,10 +13,31 @@ class Player:
 
 class LearningPlayer(Player):
     def __init__(self, exploration_prob = 0.9, is_best_player = False):
-        self.id = str(random.randint(0, 1000000))
+        self.id = self.inheritOrCreateId()
         self.exploration_prob = exploration_prob
         self.is_best_player = is_best_player
         self.brain = Brain(self)
+
+    def inheritOrCreateId(self):
+        # Get a list of all pth.tar files in the artifacts directory
+        pth_files = [f for f in os.listdir(artifacts_path) if f.endswith(".pth.tar") and f.startswith("new_player_nn_")]
+
+        # Sort the list of pth.tar files based on creation time
+        pth_files.sort(key=lambda x: os.path.getctime(os.path.join(artifacts_path, x)), reverse=True)
+
+        # Check if there are any pth.tar files
+        if pth_files:
+            # Select the last (most recent) pth.tar file
+            latest_pth_file = pth_files[-1]
+
+            # Extract the ID from the filename
+            id = latest_pth_file.split("_")[3].split(".")[0]
+
+            print(f"Inherited the ID: {id}")
+        else:
+            print(f"New player, creating a new ID...")
+            id = str(random.randint(0, 1000000))
+        return id
 
     def setAsBestPlayer(self):
         self.is_best_player = True
