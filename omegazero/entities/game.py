@@ -144,7 +144,7 @@ class Game:
     def savePGN(self, name="game"):
         # Initialize a counter to add to the filename if it already exists
         counter = 1
-        file_name = f"games/{name}.pgn"
+        file_name = f"games/{name}_{counter}.pgn"
 
         # Create the "games" folder if it doesn't exist
         os.makedirs("games", exist_ok=True)
