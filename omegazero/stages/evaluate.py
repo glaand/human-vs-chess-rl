@@ -23,13 +23,14 @@ class EvaluateStage:
 
         self.metrics = {
             "wins": 0,
-            "losses_or_draw": 0,
+            "losses": 0,
+            "draw": 0,
         }
 
         # @todo: parallelize this
         for i in tqdm(range(n)):
             game = Game(self.initial_state)
-
+            '''
             # choose random player colors
             if random.random() < 0.5:
                 game.setWhitePlayer(self.best_player)
@@ -37,6 +38,9 @@ class EvaluateStage:
             else:
                 game.setWhitePlayer(self.new_player)
                 game.setBlackPlayer(self.best_player)
+            '''
+            game.setWhitePlayer(self.best_player)
+            game.setBlackPlayer(self.new_player)
 
             game.playUntilFinished()
             game.savePGN(f"eval_{self.episode}")
@@ -48,8 +52,10 @@ class EvaluateStage:
                 self.metrics["wins"] += 1
             elif result == "0-1" and self.new_player.id == game.blackPlayer.id:
                 self.metrics["wins"] += 1
+            elif result == "1/2-1/2":
+                self.metrics["draw"] += 1
             else:
-                self.metrics["losses_or_draw"] += 1
+                self.metrics["losses"] += 1
 
         if self.metrics["wins"] / n > win_quote:
             print(f"- New player is better than best player, replacing best player")
