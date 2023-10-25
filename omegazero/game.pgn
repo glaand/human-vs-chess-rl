@@ -1,0 +1,14 @@
+[Event "?"]
+[Site "?"]
+[Date "????.??.??"]
+[Round "?"]
+[White "?"]
+[Black "?"]
+[Result "0-1"]
+[FEN "4k3/3ppp2/8/8/8/8/2PPPPP1/4K3 w - - 0 1"]
+[SetUp "1"]
+
+1. f4 f5 2. g4 fxg4 3. d4 g3 4. c3 Kf7 5. Kf1 Ke6 6. Kg2 Kd5 7. e4+ Kxe4 8. d5
+Kxf4 9. d6 exd6 10. Kh1 Kf3 11. c4 Kf2 12. c5 g2+ 13. Kh2 g1=Q+ 14. Kh3 Qg3#
+0-1
+

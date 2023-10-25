@@ -3,6 +3,7 @@ import random
 from tqdm import tqdm
 
 from entities.game import Game
+from entities.player import StockfishPlayer
 
 class EvaluateStage:
     def __init__(self, initial_state: str, episode):
@@ -40,7 +41,8 @@ class EvaluateStage:
                 game.setBlackPlayer(self.best_player)
             '''
             game.setWhitePlayer(self.best_player)
-            game.setBlackPlayer(self.new_player)
+            #black is stockfish
+            game.setBlackPlayer(StockfishPlayer())
 
             game.playUntilFinished()
             game.savePGN(f"eval_{self.episode}")
@@ -48,10 +50,10 @@ class EvaluateStage:
             # get the result
             result = game.gameState.board.result()
             # check if the result is a win
-            if result == "1-0" and self.new_player.id == game.whitePlayer.id:
+            if result == "1-0" and self.best_player.id == game.whitePlayer.id:
                 self.metrics["wins"] += 1
-            elif result == "0-1" and self.new_player.id == game.blackPlayer.id:
-                self.metrics["wins"] += 1
+            elif result == "0-1":
+                self.metrics["losses"] += 1
             elif result == "1/2-1/2":
                 self.metrics["draw"] += 1
             else:
