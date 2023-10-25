@@ -2,7 +2,7 @@ from typing import List
 import numpy as np
 import chess
 import chess.pgn
-
+import os
 import config
 
 from .player import Player
@@ -142,12 +142,24 @@ class Game:
             current_move += 1
 
     def savePGN(self, name="game"):
+        # Initialize a counter to add to the filename if it already exists
+        counter = 1
+        file_name = f"games/{name}.pgn"
+
+        # Create the "games" folder if it doesn't exist
+        os.makedirs("games", exist_ok=True)
+
+        # Check if the file already exists, and if it does, add a number to the filename
+        while os.path.exists(file_name):
+            file_name = f"games/{name}_{counter}.pgn"
+            counter += 1
+
         pgn_game = chess.pgn.Game.from_board(self.gameState.board)
-        # write the game as a pgn file
-        pgn_file = open(f"{name}.pgn", "w", encoding="utf-8")
-        exporter = chess.pgn.FileExporter(pgn_file)
-        pgn_game.accept(exporter)
-        pgn_file.close()
+
+        # Write the game as a PGN file
+        with open(file_name, "w", encoding="utf-8") as pgn_file:
+            exporter = chess.pgn.FileExporter(pgn_file)
+            pgn_game.accept(exporter)
     
     def getGameState(self):
         return self.gameState

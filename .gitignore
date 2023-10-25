@@ -166,3 +166,4 @@ __pycache__/
 *.h5
 #benito logs
 benito/logs/
+omegazero/games/
