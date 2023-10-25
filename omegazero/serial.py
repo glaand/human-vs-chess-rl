@@ -7,7 +7,7 @@ import config
 import math
 from tqdm import tqdm
 
-fen_string = "4k3/8/8/7R/8/8/4K3/4R3 b - - 0 1"
+fen_string = "4k3/3ppp2/8/8/8/8/2PPPPP1/4K3 w - - 0 1"
 
 def main():
     print("Running omegazero in serial mode")
