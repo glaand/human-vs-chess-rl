@@ -7,7 +7,7 @@ import config
 import math
 from tqdm import tqdm
 
-fen_string = "4k3/3ppp2/8/8/8/8/2PPPPP1/4K3 w - - 0 1"
+fen_string = "4kn2/8/8/8/8/8/4P3/R3K3 w - - 0 1"
 
 def main():
     print("Running omegazero in serial mode")
@@ -39,6 +39,7 @@ def main():
             f.write(f"Episode {episode} - {metrics}\n")
 
         exploration_prob = exploration_prob * math.exp(-(1 - episode / episodes) * episode)
+        print(f"Exploration probability: {exploration_prob}")
 
 if __name__ == "__main__":
     main()
