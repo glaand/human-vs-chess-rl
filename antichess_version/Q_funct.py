@@ -2,11 +2,25 @@ from board_function import state_to_index, board_to_input_array
 import chess
 import numpy as np
 import random
+from collections import deque
 
 experience_replay_buffer = deque(maxlen=10000)
 
 
 def update_q_table(state, action, reward, next_state, model):
+    """
+    Updates the Q-table using the given state, action, reward, next state, and model.
+
+    Args:
+        state (chess.Board): The current state of the game.
+        action (chess.Move): The action taken in the current state.
+        reward (float): The reward received for taking the action in the current state.
+        next_state (chess.Board): The resulting state after taking the action.
+        model (keras.Model): The Q-value neural network model.
+
+    Returns:
+        None
+    """
     state_index = state_to_index(state)
     next_state_index = state_to_index(next_state)
     action_index = list(state.legal_moves).index(action)
@@ -29,6 +43,15 @@ def update_q_table(state, action, reward, next_state, model):
         
 
 def calculate_reward(board):
+    """
+    Calculates the reward for a given chess board state.
+
+    Args:
+        board (chess.Board): The chess board state to calculate the reward for.
+
+    Returns:
+        float: The reward for the given board state.
+    """
     reward = 0
     piece_count = len(board.piece_map())
     reward -= (32 - piece_count) * 0.1
@@ -39,3 +62,25 @@ def calculate_reward(board):
         reward -= 5
     return reward
 
+def choose_action(board, model, exploration_prob):
+    """
+    Chooses an action to take given the current board state and a trained Q-function model.
+
+    Args:
+        board: A chess.Board object representing the current board state.
+        model: A trained Q-function model that takes in a board state and outputs Q-values for each possible action.
+
+    Returns:
+        A chess.Move object representing the chosen action.
+    """
+    if np.random.rand() < exploration_prob:
+        return np.random.choice(list(board.legal_moves))
+    else:
+        state_index = state_to_index(board)
+        legal_moves_list = list(board.legal_moves)
+        if not legal_moves_list:
+            return chess.Move.null()
+        q_values = model.predict(np.array([board_to_input_array(board)]))[0]
+        best_move_index = np.argmax(q_values)
+        best_move_uci = legal_moves_list[min(best_move_index, len(legal_moves_list)-1)].uci()
+        return chess.Move.from_uci(best_move_uci)
