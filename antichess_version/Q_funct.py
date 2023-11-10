@@ -5,7 +5,7 @@ import random
 from collections import deque
 from config import learning_rate, discount_factor
 
-experience_replay_buffer = deque(maxlen=10000)
+experience_replay_buffer = deque(maxlen=1000000)
 
 def get_exploration_rate(initial_rate, decay_rate, min_rate, num_games):
     return max(initial_rate - decay_rate * num_games, min_rate)

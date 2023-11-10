@@ -75,31 +75,39 @@ def play_game(model1, model2, exploration_prob):
     return board.result()
 
 
-def train_new_player(best_player_model, new_player_model, threshold_win_rate=0.55, num_games=3, exploration_prob=0.2):
+def train_new_player(best_player_model, new_player_model, threshold_win_rate=0.55, exploration_prob=0.2):
     new_player_wins = 0
-    for game in range(num_games):
+    total_games_played = 0
+
+    while True:
+        total_games_played += 1
         if random.choice([True, False]):
-            result = play_game(new_player_model, best_player_model,exploration_prob)
+            exploration_prob = get_exploration_rate(initial_exploration_rate, exploration_decay_rate, min_exploration_rate, total_games_played)
+            result = play_game(new_player_model, best_player_model, exploration_prob)
             if result == "1-0":
                 new_player_wins += 1
         else:
-            result = play_game(best_player_model, new_player_model,exploration_prob)
+            result = play_game(best_player_model, new_player_model, exploration_prob)
             if result == "0-1":
                 new_player_wins += 1
 
-        win_rate = new_player_wins / (game + 1)
-        print(f"Game {game + 1} of {num_games}. New player win rate: {win_rate}")
+        win_rate = new_player_wins / total_games_played
+        print(f"Game {total_games_played}. New player win rate: {win_rate}")
+
         if win_rate >= threshold_win_rate:
             print(f"New player has achieved a win rate of {win_rate}. It becomes the best player.")
             id = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-            #best_player_model.save("model/player" + str(id) + ".h5")
-            best_player_model.save("model/best_player.h5")
-            return best_player_model, win_rate, id, num_games
-        else:
-            id = "best_player_remains"
-            return best_player_model, win_rate, id, num_games
+            new_player_model.save("model/best_player.h5")
+            return new_player_model, win_rate, id, total_games_played
+        #condition for too many games played
+        
+        if total_games_played > 10:
+            id = "player remains"
+            return new_player_model, win_rate, id, total_games_played
+            
 
-    return best_player_model, win_rate, id, num_games
+
+
 
 # Load or create initial best player model
 try:
@@ -125,7 +133,6 @@ while True:
     num_games_played = 0
 
     # Adjust exploration probability
-    exploration_prob = get_exploration_rate(initial_exploration_rate, exploration_decay_rate, min_exploration_rate, num_games_played)
 
     # Rest of the training loop
     new_player_model = create_new_model()
