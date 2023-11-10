@@ -1,0 +1,2 @@
+from board_function import board_to_input_array, state_to_index, move_to_output_array, count_pieces_by_color,normalize_input
+from config import state_space_size, action_space_size, learning_rate, discount_factor

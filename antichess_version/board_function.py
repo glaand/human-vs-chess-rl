@@ -1,8 +1,8 @@
 
 import numpy as np
+import chess
+from config import state_space_size, action_space_size
 
-state_space_size = (8, 8, 12)
-action_space_size = 4096
 
 
 def board_to_input_array(board):
@@ -56,3 +56,22 @@ def move_to_output_array(move, legal_moves):
     move_index = list(legal_moves).index(move)
     output_array[move_index] = 1
     return output_array
+
+def count_pieces_by_color(board, color):
+    """ function to count the number of pieces of a given color on the board after the game is finished"""
+    piece_types = [chess.PAWN, chess.KNIGHT, chess.BISHOP, chess.ROOK, chess.QUEEN, chess.KING]
+    return sum(len(board.pieces(piece_type, color)) for piece_type in piece_types)
+
+def normalize_input(board):
+    """
+    Normalizes the input board array by dividing it by 12.0.
+
+    Args:
+        board (list): A list representing the current state of the chess board.
+
+    Returns:
+        numpy.ndarray: A normalized numpy array representing the current state of the chess board.
+    """
+    board_array = np.array(board_to_input_array(board), dtype=np.float16)
+    board_array /= 12.0
+    return board_array
