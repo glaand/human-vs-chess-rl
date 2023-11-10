@@ -3,8 +3,12 @@ import chess
 import numpy as np
 import random
 from collections import deque
+from config import learning_rate, discount_factor
 
 experience_replay_buffer = deque(maxlen=10000)
+
+def get_exploration_rate(initial_rate, decay_rate, min_rate, num_games):
+    return max(initial_rate - decay_rate * num_games, min_rate)
 
 
 def update_q_table(state, action, reward, next_state, model):
@@ -42,7 +46,7 @@ def update_q_table(state, action, reward, next_state, model):
         model.train_on_batch(states, q_values)
         
 
-def calculate_reward(board):
+def calculate_reward(board, ai_color):
     """
     Calculates the reward for a given chess board state.
 
@@ -54,13 +58,31 @@ def calculate_reward(board):
     """
     reward = 0
     piece_count = len(board.piece_map())
+
+    # Penalize for having more pieces
     reward -= (32 - piece_count) * 0.1
 
-    if board.is_stalemate() or board.is_insufficient_material():
-        reward -= 5
-    elif board.is_fivefold_repetition() or board.is_seventyfive_moves():
-        reward -= 5
+    # Check for game over conditions
+    if board.is_game_over():
+        result = board.result()
+        if (result == '0-1' and ai_color == chess.WHITE) or (result == '1-0' and ai_color == chess.BLACK):
+            # AI lost all pieces (goal achieved)
+            reward += 1000  # Large positive reward
+        elif (result == '1-0' and ai_color == chess.WHITE) or (result == '0-1' and ai_color == chess.BLACK):
+            # AI won in the traditional sense (not the goal)
+            reward -= 1000  # Large negative reward
+        else:
+            # Draw or stalemate
+            reward -= 5  # Moderate negative reward
+    else:
+        # Penalize for certain non-winning conditions
+        if board.is_stalemate() or board.is_insufficient_material():
+            reward -= 5
+        elif board.is_fivefold_repetition() or board.is_seventyfive_moves():
+            reward -= 5
+
     return reward
+
 
 def choose_action(board, model, exploration_prob):
     """
