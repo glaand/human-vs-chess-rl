@@ -92,10 +92,12 @@ def train_new_player(best_player_model, new_player_model, threshold_win_rate=0.5
         if win_rate >= threshold_win_rate:
             print(f"New player has achieved a win rate of {win_rate}. It becomes the best player.")
             id = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-            best_player_model.save("model/player" + str(id) + ".h5")
+            #best_player_model.save("model/player" + str(id) + ".h5")
             best_player_model.save("model/best_player.h5")
+            return best_player_model, win_rate, id, num_games
         else:
             id = "best_player_remains"
+            return best_player_model, win_rate, id, num_games
 
     return best_player_model, win_rate, id, num_games
 
@@ -114,10 +116,12 @@ exploration_decay_rate = 0.001
 min_exploration_rate = 0.01
 num_games_played = 0
 
+df = pd.DataFrame(columns=['win_rate', 'id', 'num_games_played'])
+
 # Main training and updating loop
 while True:
     #create a df to store the results
-    df = pd.DataFrame(columns=['win_rate', 'id', 'num_games_played'])
+    
     num_games_played = 0
 
     # Adjust exploration probability
