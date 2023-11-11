@@ -85,25 +85,4 @@ def calculate_reward(board, ai_color):
     return reward
 
 
-def choose_action(board, model, exploration_prob):
-    """
-    Chooses an action to take given the current board state and a trained Q-function model.
 
-    Args:
-        board: A chess.Board object representing the current board state.
-        model: A trained Q-function model that takes in a board state and outputs Q-values for each possible action.
-
-    Returns:
-        A chess.Move object representing the chosen action.
-    """
-    if np.random.rand() < exploration_prob:
-        return np.random.choice(list(board.legal_moves))
-    else:
-        state_index = state_to_index(board)
-        legal_moves_list = list(board.legal_moves)
-        if not legal_moves_list:
-            return chess.Move.null()
-        q_values = model.predict(np.array([board_to_input_array(board)]))[0]
-        best_move_index = np.argmax(q_values)
-        best_move_uci = legal_moves_list[min(best_move_index, len(legal_moves_list)-1)].uci()
-        return chess.Move.from_uci(best_move_uci)

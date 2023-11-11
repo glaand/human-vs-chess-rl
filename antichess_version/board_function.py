@@ -2,7 +2,7 @@
 import numpy as np
 import chess
 from config import state_space_size, action_space_size
-
+import numba
 
 
 def board_to_input_array(board):
@@ -28,6 +28,7 @@ def board_to_input_array(board):
         board_array[square // 8, square % 8, piece_type] = color + 1
     return board_array
 
+
 def state_to_index(board):
     """
     Converts the given board state to an index in the state space.
@@ -41,6 +42,7 @@ def state_to_index(board):
     board_array = np.array(board_to_input_array(board))
     return hash(board_array.tostring()) % state_space_size[0]
 
+@numba.njit
 def move_to_output_array(move, legal_moves):
     """
     Converts a given move to a one-hot encoded numpy array of legal moves.
@@ -72,6 +74,6 @@ def normalize_input(board):
     Returns:
         numpy.ndarray: A normalized numpy array representing the current state of the chess board.
     """
-    board_array = np.array(board_to_input_array(board), dtype=np.float16)
+    board_array = np.array(board_to_input_array(board), dtype=np.float8)
     board_array /= 12.0
     return board_array

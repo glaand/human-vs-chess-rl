@@ -1,5 +1,6 @@
 
 import random
+import numpy as np
 import chess
 import chess.variant
 import tensorflow as tf
@@ -9,8 +10,8 @@ from tensorflow.keras.models import Sequential, load_model
 from IPython.display import display, HTML
 import chess.svg
 from config import state_space_size, action_space_size, learning_rate, discount_factor
-from board_function import board_to_input_array, state_to_index, move_to_output_array,  count_pieces_by_color, normalize_input
-from Q_funct import update_q_table, choose_action, calculate_reward, get_exploration_rate
+from Q_funct import update_q_table, calculate_reward, get_exploration_rate
+from board_function import state_to_index, board_to_input_array
 from tensorflow.keras.layers import Input, Conv2D, Flatten, Dense, BatchNormalization, Activation
 from tensorflow.keras.models import Model
 import tensorflow as tf
@@ -82,6 +83,29 @@ def play_game(model1, model2, exploration_prob):
 
     return board.result()
 
+def choose_action(board, model, exploration_prob):
+    """
+    Chooses an action to take given the current board state and a trained Q-function model.
+
+    Args:
+        board: A chess.Board object representing the current board state.
+        model: A trained Q-function model that takes in a board state and outputs Q-values for each possible action.
+
+    Returns:
+        A chess.Move object representing the chosen action.
+    """
+    if np.random.rand() < exploration_prob:
+        return np.random.choice(list(board.legal_moves))
+    else:
+        state_index = state_to_index(board)
+        legal_moves_list = list(board.legal_moves)
+        if not legal_moves_list:
+            return chess.Move.null()
+        q_values = model.predict(np.array([board_to_input_array(board)]))[0]
+        best_move_index = np.argmax(q_values)
+        best_move_uci = legal_moves_list[min(best_move_index, len(legal_moves_list)-1)].uci()
+        return chess.Move.from_uci(best_move_uci)
+
 
 def train_new_player(best_player_model, new_player_model, threshold_win_rate=0.55, exploration_prob=0.2):
     new_player_wins = 0
@@ -97,11 +121,15 @@ def train_new_player(best_player_model, new_player_model, threshold_win_rate=0.5
             if result == "1-0":
                 new_player_wins += 1
                 print("number of games played: ", total_games_played)
+            else:
+                print("player lost")
         else:
             result = play_game(best_player_model, new_player_model, exploration_prob)
             if result == "0-1":
                 new_player_wins += 1
                 print("number of games played: ", total_games_played)
+            else:
+                print("player lost")
 
         win_rate = new_player_wins / total_games_played
         print(f"Game {total_games_played}. New player win rate: {win_rate}")
