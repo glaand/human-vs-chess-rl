@@ -4,6 +4,7 @@ import numpy as np
 import random
 from collections import deque
 from config import learning_rate, discount_factor
+import numpy as np
 
 experience_replay_buffer = deque(maxlen=1000000)
 

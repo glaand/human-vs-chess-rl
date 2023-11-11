@@ -8,8 +8,6 @@ import pandas as pd
 import datetime
 from tensorflow.keras.models import Sequential, Model, load_model
 from tensorflow.keras.layers import Dense, Conv2D, Flatten, Input
-from tensorflow.compat.v1.keras.optimizers import Adam
-from tensorflow.keras.callbacks import TensorBoard
 from IPython.display import display, HTML
 import chess.svg
 import matplotlib.pyplot as plt
@@ -17,28 +15,10 @@ from tqdm import tqdm
 from config import state_space_size, action_space_size, learning_rate, discount_factor
 from board_function import board_to_input_array, state_to_index, move_to_output_array,  count_pieces_by_color, normalize_input
 from Q_funct import update_q_table, choose_action, calculate_reward, get_exploration_rate
-# Chess Variant Antichess
-
-
-
-
-
-
-
-
-
-
-
-# Neural Network Model alpha zero
-input_layer = Input(shape=state_space_size)
-conv1 = Conv2D(64, (3, 3), activation='relu', padding='same')(input_layer)
-conv2 = Conv2D(64, (3, 3), activation='relu', padding='same')(conv1)
-flatten_layer = Flatten()(conv2)
-dense1 = Dense(64, activation='relu')(flatten_layer)
-dense2 = Dense(64, activation='relu')(dense1)
-output_layer = Dense(action_space_size, activation='softmax')(dense2)
-model = Model(inputs=input_layer, outputs=output_layer)
-model.compile(optimizer=tf.keras.optimizers.legacy.Adam(learning_rate=0.1), loss=['categorical_crossentropy'], metrics=['accuracy'])
+from tensorflow.keras.layers import Input, Conv2D, Flatten, Dense, BatchNormalization, Activation
+from tensorflow.keras.models import Model
+import tensorflow as tf
+from tensorflow.keras.initializers import RandomNormal, RandomUniform
 
 
 
@@ -46,9 +26,41 @@ model.compile(optimizer=tf.keras.optimizers.legacy.Adam(learning_rate=0.1), loss
 
 
 def create_new_model():
+    # Randomly choosing initializers add he initializers
+    init_choices = [RandomNormal(mean=0.0, stddev=0.05), RandomUniform(minval=-0.05, maxval=0.05), 'glorot_uniform', 'glorot_normal', 'he_normal', 'he_uniform']
+    conv_initializer = random.choice(init_choices)
+    dense_initializer = random.choice(init_choices)
+
+    # Enhanced Neural Network Model with random initializers
+    input_layer = Input(shape=state_space_size)
+
+    conv1 = Conv2D(64, (3, 3), padding='same', kernel_initializer=conv_initializer)(input_layer)
+    batch_norm1 = BatchNormalization()(conv1)
+    activation1 = Activation('relu')(batch_norm1)
+
+    conv2 = Conv2D(128, (3, 3), padding='same', kernel_initializer=conv_initializer)(activation1)
+    batch_norm2 = BatchNormalization()(conv2)
+    activation2 = Activation('relu')(batch_norm2)
+
+    conv3 = Conv2D(256, (3, 3), padding='same', kernel_initializer=conv_initializer)(activation2)
+    batch_norm3 = BatchNormalization()(conv3)
+    activation3 = Activation('relu')(batch_norm3)
+
+    flatten_layer = Flatten()(activation3)
+
+    dense1 = Dense(256, activation='relu', kernel_initializer=dense_initializer)(flatten_layer)
+    dense2 = Dense(128, activation='relu', kernel_initializer=dense_initializer)(dense1)
+    dense3 = Dense(64, activation='relu', kernel_initializer=dense_initializer)(dense2)
+
+    output_layer = Dense(action_space_size, activation='softmax', kernel_initializer=dense_initializer)(dense3)
+
     new_model = Model(inputs=input_layer, outputs=output_layer)
-    new_model.compile(optimizer=tf.keras.optimizers.legacy.Adam(learning_rate=0.1), loss=['categorical_crossentropy'], metrics=['accuracy'])
+    new_model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
+                      loss='categorical_crossentropy',
+                      metrics=['accuracy'])
+
     return new_model
+
 
 def train_model_self_play(num_games, model, exploration_prob=0.2):
     for _ in range(num_games):
@@ -86,10 +98,12 @@ def train_new_player(best_player_model, new_player_model, threshold_win_rate=0.5
             result = play_game(new_player_model, best_player_model, exploration_prob)
             if result == "1-0":
                 new_player_wins += 1
+                print("number of games played: ", total_games_played)
         else:
             result = play_game(best_player_model, new_player_model, exploration_prob)
             if result == "0-1":
                 new_player_wins += 1
+                print("number of games played: ", total_games_played)
 
         win_rate = new_player_wins / total_games_played
         print(f"Game {total_games_played}. New player win rate: {win_rate}")
@@ -99,11 +113,14 @@ def train_new_player(best_player_model, new_player_model, threshold_win_rate=0.5
             id = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
             new_player_model.save("model/best_player.h5")
             return new_player_model, win_rate, id, total_games_played
+
         #condition for too many games played
         
-        if total_games_played > 10:
-            id = "player remains"
+        if total_games_played > 2500:
+            id = "player remains after 2.5k games"
+            print(f"New player has achieved a win rate of {win_rate}. It did not become the best player.")
             return new_player_model, win_rate, id, total_games_played
+
             
 
 
@@ -111,15 +128,15 @@ def train_new_player(best_player_model, new_player_model, threshold_win_rate=0.5
 
 # Load or create initial best player model
 try:
-    best_player_model = load_model("models/best_player.h5")
+    best_player_model = load_model("model/best_player.h5")
 except IOError:
     print("No initial model found. Training a new model.")
     best_player_model = create_new_model()
-    train_model_self_play(2, best_player_model)
+    train_model_self_play(100, best_player_model)
 
 # Main training and updating loop
 # Initial Hyperparameters
-initial_exploration_rate = 0.2
+initial_exploration_rate = 0.8
 exploration_decay_rate = 0.001
 min_exploration_rate = 0.01
 num_games_played = 0
