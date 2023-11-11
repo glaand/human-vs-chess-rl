@@ -1,17 +1,13 @@
-from collections import deque
+
 import random
 import chess
 import chess.variant
-import numpy as np
 import tensorflow as tf
 import pandas as pd
 import datetime
-from tensorflow.keras.models import Sequential, Model, load_model
-from tensorflow.keras.layers import Dense, Conv2D, Flatten, Input
+from tensorflow.keras.models import Sequential, load_model
 from IPython.display import display, HTML
 import chess.svg
-import matplotlib.pyplot as plt
-from tqdm import tqdm
 from config import state_space_size, action_space_size, learning_rate, discount_factor
 from board_function import board_to_input_array, state_to_index, move_to_output_array,  count_pieces_by_color, normalize_input
 from Q_funct import update_q_table, choose_action, calculate_reward, get_exploration_rate
@@ -145,11 +141,7 @@ df = pd.DataFrame(columns=['win_rate', 'id', 'num_games_played'])
 
 # Main training and updating loop
 while True:
-    #create a df to store the results
-    
-    num_games_played = 0
 
-    # Adjust exploration probability
 
     # Rest of the training loop
     new_player_model = create_new_model()
@@ -160,6 +152,6 @@ while True:
     df.to_csv('results.csv', index=False)
 
     best_player_model.save("best_player.h5")
-    num_games_played += 1
+
 
 
