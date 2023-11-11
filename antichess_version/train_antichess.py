@@ -35,11 +35,11 @@ def create_new_model():
     batch_norm1 = BatchNormalization()(conv1)
     activation1 = Activation('relu')(batch_norm1)
 
-    conv2 = Conv2D(128, (3, 3), padding='same', kernel_initializer=conv_initializer)(activation1)
+    conv2 = Conv2D(128, (5, 5), padding='same', kernel_initializer=conv_initializer)(activation1)
     batch_norm2 = BatchNormalization()(conv2)
     activation2 = Activation('relu')(batch_norm2)
 
-    conv3 = Conv2D(256, (3, 3), padding='same', kernel_initializer=conv_initializer)(activation2)
+    conv3 = Conv2D(256, (5, 5), padding='same', kernel_initializer=conv_initializer)(activation2)
     batch_norm3 = BatchNormalization()(conv3)
     activation3 = Activation('relu')(batch_norm3)
 
@@ -134,7 +134,7 @@ def train_new_player(best_player_model, new_player_model, threshold_win_rate=0.5
         win_rate = new_player_wins / total_games_played
         print(f"Game {total_games_played}. New player win rate: {win_rate}")
 
-        if win_rate >= threshold_win_rate:
+        if win_rate >= threshold_win_rate and total_games_played >= 10:
             print(f"New player has achieved a win rate of {win_rate}. It becomes the best player.")
             id = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
             new_player_model.save("model/best_player.h5")
