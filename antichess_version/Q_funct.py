@@ -32,7 +32,7 @@ def update_q_table(state, action, reward, next_state, model):
 
     total_reward = reward
     experience_replay_buffer.append((state_index, action_index, total_reward, next_state_index))
-    batch_size = min(len(experience_replay_buffer), 8)
+    batch_size = min(len(experience_replay_buffer), 32)
     if batch_size > 0:
         batch = np.array(random.sample(experience_replay_buffer, batch_size))
         states = np.array([board_to_input_array(chess.Board(fen=chess.STARTING_FEN)) for _ in batch[:, 0]])
@@ -40,11 +40,14 @@ def update_q_table(state, action, reward, next_state, model):
         q_values = model.predict(states)
         next_q_values = model.predict(next_states)
         
-        for i in range(batch_size):
-            action_idx = int(batch[i, 1])
-            q_values[i, action_idx] += learning_rate * (batch[i, 2] + discount_factor * np.max(next_q_values[i]) - q_values[i, action_idx])
+        action_idx = batch[:, 1].astype(int)
+        q_values[np.arange(batch_size), action_idx] += learning_rate * (batch[:, 2] + discount_factor * np.max(next_q_values, axis=1) - q_values[np.arange(batch_size), action_idx])
         
         model.train_on_batch(states, q_values)
+        
+        # Clear the experience replay buffer if it exceeds its maximum length
+        if len(experience_replay_buffer) > experience_replay_buffer.maxlen:
+            experience_replay_buffer.clear()
         
 
 def calculate_reward(board, ai_color):

@@ -175,6 +175,8 @@ while True:
 
     # Rest of the training loop
     new_player_model = create_new_model()
+    print("new challenger")
+    print("--------------------")
     best_player_model, winrate, id, num_games_played = train_new_player(best_player_model, new_player_model)
 
     # Write the results to a new row in the results df
