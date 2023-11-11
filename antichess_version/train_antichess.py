@@ -86,6 +86,8 @@ def play_game(model1, model2, exploration_prob):
 def train_new_player(best_player_model, new_player_model, threshold_win_rate=0.55, exploration_prob=0.2):
     new_player_wins = 0
     total_games_played = 0
+    win_rate = 0
+    
 
     while True:
         total_games_played += 1
