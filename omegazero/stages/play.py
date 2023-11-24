@@ -29,13 +29,8 @@ class PlayStage:
         for i in tqdm(range(n)):
             game = Game(self.initial_state)
 
-            # choose random player colors
-            if random.random() < 1:
-                game.setWhitePlayer(self.learning_player)
-                game.setBlackPlayer(self.stockfish_player)
-            else:
-                game.setWhitePlayer(self.stockfish_player)
-                game.setBlackPlayer(self.learning_player)
+            game.setWhitePlayer(self.learning_player)
+            game.setBlackPlayer(self.stockfish_player)
 
             game.playUntilFinished()
             self.learning_player.brain.memory.commit_ltmemory()

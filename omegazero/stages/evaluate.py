@@ -31,17 +31,8 @@ class EvaluateStage:
         # @todo: parallelize this
         for i in tqdm(range(n)):
             game = Game(self.initial_state)
-            '''
-            # choose random player colors
-            if random.random() < 0.5:
-                game.setWhitePlayer(self.best_player)
-                game.setBlackPlayer(self.new_player)
-            else:
-                game.setWhitePlayer(self.new_player)
-                game.setBlackPlayer(self.best_player)
-            '''
+            
             game.setWhitePlayer(self.best_player)
-            #black is stockfish
             game.setBlackPlayer(StockfishPlayer())
 
             game.playUntilFinished()
