@@ -21,6 +21,23 @@ class GameState:
             if move[0] == action_tuple[0] and move[1] == action_tuple[1]:
                 return move[2]
         return None
+    
+    def getIndexOfAllowedMove(self, move):
+
+        found = False
+        from_square = None
+        to_square = None
+
+        for legal_move in self.board.generate_legal_moves():
+            if move == legal_move.uci():
+                found = True
+                from_square, to_square = legal_move.from_square, legal_move.to_square
+
+        if not found:
+            raise Exception(f"Invalid move: {move}")
+
+        index = from_square * 64 + to_square
+        return index
 
     def takeAction(self, action):
 
@@ -141,7 +158,7 @@ class Game:
             self.gameState.board = newBoard
             current_move += 1
 
-    def savePGN(self, name="game"):
+    def savePGN(self, name, white_name="OmegaZero", black_name="Stockfish"):
         # Initialize a counter to add to the filename if it already exists
         counter = 1
         file_name = f"games/{name}_{counter}.pgn"
@@ -155,6 +172,9 @@ class Game:
             counter += 1
 
         pgn_game = chess.pgn.Game.from_board(self.gameState.board)
+        pgn_game.headers["Event"] = name
+        pgn_game.headers["White"] = white_name
+        pgn_game.headers["Black"] = black_name
 
         # Write the game as a PGN file
         with open(file_name, "w", encoding="utf-8") as pgn_file:

@@ -7,16 +7,15 @@ from algorithms.nn import NNManager
 from entities.memory import Memory
 
 class Brain:
-    def __init__(self, player):
+    def __init__(self):
         self.action_size = 4096
         self.MCTSsimulations = config.MCTS_SIMULATIONS
         self.mcts = None
-        self.player = player
-        self.nn_manager = NNManager(self.player)
+        self.nn_manager = NNManager()
         self.memory = Memory()
 
-    def learn(self, memory, iteration):
-        self.nn_manager.learn(memory, iteration)
+    def learn(self):
+        self.nn_manager.learn(self.memory)
     
     def simulate(self):
         ##### MOVE THE LEAF NODE
@@ -43,6 +42,28 @@ class Brain:
 
         ####pick the action
         action, value = self.chooseAction(pi, values, tau)
+        nextState, _, _ = state.takeAction(action)
+        NN_value = -self.get_preds(nextState)[0]
+
+        return (action, pi, value, NN_value)
+    
+    def stockfish_act(self, state, stockfish_move):
+        if self.mcts == None or state.id not in self.mcts.tree:
+            self.buildMCTS(state)
+        else:
+            self.changeRootMCTS(state)
+
+        #### run the simulation
+        for _ in range(self.MCTSsimulations):
+            self.simulate()
+
+        #### get action values
+        pi, values = self.getAV(1)
+
+        ####pick the action
+        action = state.getIndexOfAllowedMove(stockfish_move)
+        value = values[action]
+
         nextState, _, _ = state.takeAction(action)
         NN_value = -self.get_preds(nextState)[0]
 

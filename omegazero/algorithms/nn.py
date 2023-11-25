@@ -7,6 +7,7 @@ from torch.utils.data import DataLoader, Dataset
 from torch.nn.utils import clip_grad_norm_
 import numpy as np
 from tqdm import tqdm
+from datetime import datetime
 import os
 
 import config
@@ -124,8 +125,7 @@ class AlphaLoss(torch.nn.Module):
         return total_error
     
 class NNManager():
-    def __init__(self, player):
-        self.player = player
+    def __init__(self):
         self.learning_rate = config.LEARNING_RATE
         self.net = ChessNet()
         cuda = torch.cuda.is_available()
@@ -135,27 +135,33 @@ class NNManager():
         self.scheduler = optim.lr_scheduler.MultiStepLR(self.optimizer, milestones=[50,100,150,200,250,300,400], gamma=0.77)
         self.checkpoint = None
         self.start_epoch = 0
-        if os.path.isfile(self.model_path):
-            self.checkpoint = torch.load(self.model_path)
+        saved_model_path = self.get_latest_model_path()
+        if saved_model_path is not None and os.path.isfile(saved_model_path):
+            print("=> loading checkpoint '{}'".format(saved_model_path))
+            self.checkpoint = torch.load(saved_model_path)
             self.net.load_state_dict(self.checkpoint['state_dict'])
             if self.checkpoint != None:
                 if not (len(self.checkpoint) == 1):
-                    self.start_epoch = self.checkpoint['epoch']
                     self.optimizer.load_state_dict(self.checkpoint['optimizer'])
                     self.scheduler.load_state_dict(self.checkpoint['scheduler'])
 
+    def get_latest_model_path(self):
+        files = [f for f in os.listdir(artifacts_path) if f.endswith(".pth.tar")]
+        paths = [os.path.join(artifacts_path, basename) for basename in files]
+        latest_model_path = max(paths, key=os.path.getctime, default=None)
+        return latest_model_path
+
     @property
     def model_path(self):
-        if self.player.is_best_player:
-            return os.path.join(artifacts_path, "best_player.pth.tar")
-        return os.path.join(artifacts_path, "new_player_nn_%s.pth.tar" % self.player.id)
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        return os.path.join(artifacts_path, f"new_player_nn_{timestamp}.pth.tar")
     
     def predict(self, game_state_tensor):
         with torch.no_grad():
             preds = self.net(game_state_tensor)
         return preds
     
-    def learn(self, memory, iteration):
+    def learn(self, memory):
         cuda = torch.cuda.is_available()
         self.net.train()
         criterion = AlphaLoss()
@@ -204,17 +210,15 @@ class NNManager():
                     total_loss = 0.0
             
             self.scheduler.step()
-            if (epoch % 2) == 0:
-                torch.save({
-                        'epoch': epoch + 1,\
-                        'state_dict': self.net.state_dict(),\
-                        'optimizer' : self.optimizer.state_dict(),\
-                        'scheduler' : self.scheduler.state_dict(),\
-                    }, self.model_path)
             '''
             # Early stopping
             if len(losses_per_epoch) > 50:
                 if abs(sum(losses_per_epoch[-4:-1])/3-sum(losses_per_epoch[-16:-13])/3) <= 0.00017:
                     break
             '''
+        torch.save({
+            'state_dict': self.net.state_dict(),\
+            'optimizer' : self.optimizer.state_dict(),\
+            'scheduler' : self.scheduler.state_dict(),\
+        }, self.model_path)
         print("Finished Training!")
