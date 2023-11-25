@@ -40,31 +40,24 @@ class GameState:
         return index
 
     def takeAction(self, action):
-
-        if self.isGameOver:
+        value = 0
+        done = 0
+        
+        if self.board.is_game_over():
             if self.board.is_checkmate():
                 value = 1
-            else:
-                value = -1
             done = 1
             return (self, value, done)
 
         move = self.getAllowedActionByIndex(action)
-        if move is None:
-            raise Exception(f"Invalid action: {action}")
         newBoard = self.board.copy()
         newBoard.push_uci(move)
 
         newState = GameState(newBoard.fen())
 
-        value = 0
-        done = 0
-
-        if newState.isGameOver:
+        if newState.board.is_game_over():
             if newState.board.is_checkmate():
                 value = 1
-            else:
-                value = -1
             done = 1
 
         return (newState, value, done)
@@ -127,15 +120,13 @@ class GameState:
         # You can add additional information to the tensor, such as whose turn it is, castling rights, etc.
 
         return tensor
-    
-    @property
-    def isGameOver(self):
-        return self.board.is_game_over()
 
 class Game:
-    def __init__(self, fen: str):
+    def __init__(self, fen: str, iteration: int):
         self.fen = fen
+        self.iteration = iteration
         self.gameState = GameState(fen)
+        self.move_values = []
 
     def setWhitePlayer(self, player: Player):
         self.whitePlayer = player
@@ -146,11 +137,19 @@ class Game:
     def playUntilFinished(self):
         current_move = 0
         max_moves = config.MAX_NUMBER_OF_MOVES
-        while not self.gameState.isGameOver and current_move < max_moves:
+        while not self.gameState.board.is_game_over() and current_move < max_moves:
             if self.gameState.turn == chess.WHITE:
-                move = self.whitePlayer.makeMove(self)
+                move, MCTS_value, NN_value = self.whitePlayer.makeMove(self)
+                if self.whitePlayer.type == "learning":
+                    self.move_values.append((self.iteration, current_move, "learning", "white", MCTS_value, NN_value[0]))
+                else:
+                    self.move_values.append((self.iteration, current_move, "stockfish", "white", MCTS_value, NN_value[0]))
             else:
-                move = self.blackPlayer.makeMove(self)
+                move, MCTS_value, NN_value = self.blackPlayer.makeMove(self)
+                if self.blackPlayer.type == "learning":
+                    self.move_values.append((self.iteration, current_move, "learning", "black", MCTS_value, NN_value[0]))
+                else:
+                    self.move_values.append((self.iteration, current_move, "stockfish", "black", MCTS_value, NN_value[0]))
 
             newBoard = self.gameState.board.copy()
             newBoard.push(move)

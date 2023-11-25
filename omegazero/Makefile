@@ -9,6 +9,12 @@ clean_artifacts:
 	@rm -rf artifacts/*
 
 clean_log:
-	@rm log.txt
+	@rm -rf log.txt
 
-clean: clean_games clean_artifacts clean_log
+clean_plots:
+	@rm -rf *.png
+
+clean_csv:
+	@rm -rf *.csv
+
+clean: clean_games clean_artifacts clean_plots clean_log clean_csv

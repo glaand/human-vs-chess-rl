@@ -7,11 +7,11 @@ from algorithms.nn import NNManager
 from entities.memory import Memory
 
 class Brain:
-    def __init__(self):
+    def __init__(self, episode):
         self.action_size = 4096
         self.MCTSsimulations = config.MCTS_SIMULATIONS
         self.mcts = None
-        self.nn_manager = NNManager()
+        self.nn_manager = NNManager(episode)
         self.memory = Memory()
 
     def learn(self):
@@ -38,16 +38,16 @@ class Brain:
             self.simulate()
 
         #### get action values
-        pi, values = self.getAV(1)
+        pi, values = self.getAV(tau)
 
         ####pick the action
         action, value = self.chooseAction(pi, values, tau)
         nextState, _, _ = state.takeAction(action)
-        NN_value = -self.get_preds(nextState)[0]
+        NN_value = self.get_preds(nextState)[0]
 
         return (action, pi, value, NN_value)
     
-    def stockfish_act(self, state, stockfish_move):
+    def stockfish_act(self, state, stockfish_move, tau):
         if self.mcts == None or state.id not in self.mcts.tree:
             self.buildMCTS(state)
         else:
@@ -58,14 +58,14 @@ class Brain:
             self.simulate()
 
         #### get action values
-        pi, values = self.getAV(1)
+        pi, values = self.getAV(tau)
 
         ####pick the action
         action = state.getIndexOfAllowedMove(stockfish_move)
         value = values[action]
 
         nextState, _, _ = state.takeAction(action)
-        NN_value = -self.get_preds(nextState)[0]
+        NN_value = self.get_preds(nextState)[0]
 
         return (action, pi, value, NN_value)
 
@@ -76,7 +76,7 @@ class Brain:
         preds = self.nn_manager.predict(game_state_tensor)
         value_array = preds[0].cpu().detach().numpy()
         logits_array = preds[1].cpu().detach().numpy()
-        value = value_array[0]
+        value = -value_array[0] # minus or not????????? asshole
 
         logits = logits_array[0]
 
@@ -114,7 +114,10 @@ class Brain:
         values = np.zeros(self.action_size, dtype=np.float32)
         
         for action, edge in edges:
-            pi[action] = pow(edge.stats['N'], 1/tau)
+            if tau == 0:
+                pi[action] = 99999
+            else:
+                pi[action] = edge.stats['N']
             values[action] = edge.stats['Q']
 
         pi = pi / (np.sum(pi) * 1.0)

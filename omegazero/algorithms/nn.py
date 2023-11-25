@@ -8,6 +8,7 @@ from torch.nn.utils import clip_grad_norm_
 import numpy as np
 from tqdm import tqdm
 from datetime import datetime
+import pandas as pd
 import os
 
 import config
@@ -125,7 +126,8 @@ class AlphaLoss(torch.nn.Module):
         return total_error
     
 class NNManager():
-    def __init__(self):
+    def __init__(self, episode):
+        self.episode = episode
         self.learning_rate = config.LEARNING_RATE
         self.net = ChessNet()
         cuda = torch.cuda.is_available()
@@ -161,6 +163,19 @@ class NNManager():
             preds = self.net(game_state_tensor)
         return preds
     
+    def save_loss_data(self, loss_history):
+        columns = ['episode', 'epoch', 'loss']
+        df = pd.DataFrame(loss_history, columns=columns)
+
+        # check if loss_data.csv exists
+        try:
+            loss_data = pd.read_csv("loss_data.csv")
+        except FileNotFoundError:
+            loss_data = pd.DataFrame(columns=columns)
+
+        loss_data = pd.concat([loss_data, df], ignore_index=True)
+        loss_data.to_csv("loss_data.csv", index=False)
+    
     def learn(self, memory):
         cuda = torch.cuda.is_available()
         self.net.train()
@@ -184,38 +199,26 @@ class NNManager():
         
         train_set = CustomDataset(state_data, policy_data, value_data)
         train_loader = DataLoader(train_set, batch_size=config.BATCH_SIZE, shuffle=True, num_workers=0, pin_memory=False)
+
+        loss_history = []
         
         print("Starting training process...")
-        update_size = len(train_loader)//config.UPDATE_SIZE_DIVISOR
         for epoch in tqdm(range(self.start_epoch, config.NUM_EPOCHS)):
-            total_loss = 0.0
-            losses_per_batch = []
+            batch_loss_history = []
             for i,data in enumerate(train_loader,0):
                 state, policy, value = data
-                state, policy, value = state.float(), policy.float(), value.float()
-                if cuda:
-                    state, policy, value = state.cuda(), policy.cuda(), value.cuda()
                 value_pred, policy_pred = self.net(state)
                 loss = criterion(value_pred, value, policy_pred, policy)
-                loss = loss/config.GRADIENT_ACC_STEPS
                 loss.backward()
                 clip_grad_norm_(self.net.parameters(), config.MAX_NORM)
-                if (epoch % config.GRADIENT_ACC_STEPS) == 0:
-                    self.optimizer.step()
-                    self.optimizer.zero_grad()
-                    
-                total_loss += loss.item()
-                if i % update_size == (update_size - 1):    # print every update_size-d mini-batches of size = batch_size
-                    losses_per_batch.append(config.GRADIENT_ACC_STEPS*total_loss/update_size)
-                    total_loss = 0.0
-            
+                self.optimizer.step()
+                self.optimizer.zero_grad()
+                batch_loss_history.append(loss.item())
+            loss_history.append((self.episode, epoch, np.average(batch_loss_history)))
             self.scheduler.step()
-            '''
-            # Early stopping
-            if len(losses_per_epoch) > 50:
-                if abs(sum(losses_per_epoch[-4:-1])/3-sum(losses_per_epoch[-16:-13])/3) <= 0.00017:
-                    break
-            '''
+            
+        self.save_loss_data(loss_history)
+
         torch.save({
             'state_dict': self.net.state_dict(),\
             'optimizer' : self.optimizer.state_dict(),\

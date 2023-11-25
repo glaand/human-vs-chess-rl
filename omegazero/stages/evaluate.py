@@ -28,23 +28,23 @@ class EvaluateStage:
             "draw": 0,
         }
 
-        new_trained_brain = Brain()
+        new_trained_brain = Brain(self.episode)
 
         # @todo: parallelize this
         for i in tqdm(range(n)):
-            game = Game(self.initial_state)
+            game = Game(self.initial_state, i)
 
             exploration_prob = 0
             game.setWhitePlayer(LearningPlayer(new_trained_brain, exploration_prob))
             game.setBlackPlayer(StockfishPlayer(new_trained_brain))
 
             game.playUntilFinished()
-            game.savePGN(f"eval_{self.episode}", "OmegaZero", "Stockfish")
+            #game.savePGN(f"eval_{self.episode}", "OmegaZero", "Stockfish")
 
             # get the result
             result = game.gameState.board.result()
             # check if the result is a win
-            if result == "1-0" and self.best_player.id == game.whitePlayer.id:
+            if result == "1-0":
                 self.metrics["wins"] += 1
             elif result == "0-1":
                 self.metrics["losses"] += 1

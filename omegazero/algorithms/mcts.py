@@ -88,10 +88,11 @@ class MCTS():
 				direction = 1
 			else:
 				direction = -1
-
+				
 			edge.stats['N'] = edge.stats['N'] + 1
 			edge.stats['W'] = edge.stats['W'] + value * direction
 			edge.stats['Q'] = edge.stats['W'] / edge.stats['N']
 
 	def addNode(self, node):
 		self.tree[node.id] = node
+
