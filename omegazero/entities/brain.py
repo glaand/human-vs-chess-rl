@@ -15,9 +15,15 @@ class Brain:
         self.memory = Memory()
 
     def learn(self):
+        """
+        Trains the neural network using the memory buffer.
+        """
         self.nn_manager.learn(self.memory)
     
     def simulate(self):
+        """
+        Simulates a game by moving the leaf node, evaluating the leaf node, and backfilling the value through the tree.
+        """
         ##### MOVE THE LEAF NODE
         leaf, value, done, breadcrumbs = self.mcts.moveToLeaf()
 
@@ -28,6 +34,16 @@ class Brain:
         self.mcts.backFill(leaf, value, breadcrumbs)
 
     def act(self, state, tau):
+        """
+        Selects an action based on the given state and temperature parameter.
+
+        Args:
+            state (State): The current state of the game.
+            tau (float): The temperature parameter for action selection.
+
+        Returns:
+            tuple: A tuple containing the selected action, action probabilities, value estimate, and neural network value estimate.
+        """
         if self.mcts == None or state.id not in self.mcts.tree:
             self.buildMCTS(state)
         else:
@@ -48,6 +64,17 @@ class Brain:
         return (action, pi, value, NN_value)
     
     def stockfish_act(self, state, stockfish_move, tau):
+        """
+        Executes the stockfish_act action in the brain.
+
+        Args:
+            state (State): The current state of the game.
+            stockfish_move (str): The move made by Stockfish.
+            tau (float): The temperature parameter for action selection.
+
+        Returns:
+            tuple: A tuple containing the action, action probabilities, value, and neural network value.
+        """
         if self.mcts == None or state.id not in self.mcts.tree:
             self.buildMCTS(state)
         else:
@@ -70,6 +97,15 @@ class Brain:
         return (action, pi, value, NN_value)
 
     def get_preds(self, state):
+        """
+        Get the predictions for a given game state.
+
+        Args:
+            state: The game state.
+
+        Returns:
+            A tuple containing the predicted value, probabilities, and allowed actions.
+        """
         game_state_tensor = state.as_tensor()
         # add batch dimension
         game_state_tensor = np.expand_dims(game_state_tensor, axis=0)
@@ -93,6 +129,18 @@ class Brain:
         return ((value, probs, allowedActions))
 
     def evaluateLeaf(self, leaf, value, done, breadcrumbs):
+        """
+        Evaluates a leaf node in the MCTS tree.
+
+        Args:
+            leaf (Node): The leaf node to evaluate.
+            value (float): The value associated with the leaf node.
+            done (int): Flag indicating if the game is done or not.
+            breadcrumbs (list): The sequence of actions taken to reach the leaf node.
+
+        Returns:
+            tuple: A tuple containing the value of the leaf node and the breadcrumbs.
+        """
         if done == 0:
             value, probs, allowedActions = self.get_preds(leaf.state)
             probs = probs[allowedActions]
@@ -109,6 +157,16 @@ class Brain:
         return ((value, breadcrumbs))
         
     def getAV(self, tau):
+        """
+        Get the action probabilities and values for the given tau.
+
+        Parameters:
+        tau (int): The temperature parameter for controlling the exploration-exploitation trade-off.
+
+        Returns:
+        pi (numpy.ndarray): The action probabilities.
+        values (numpy.ndarray): The action values.
+        """
         edges = self.mcts.root.edges
         pi = np.zeros(self.action_size, dtype=np.integer)
         values = np.zeros(self.action_size, dtype=np.float32)
@@ -124,6 +182,17 @@ class Brain:
         return pi, values
 
     def chooseAction(self, pi, values, tau):
+        """
+        Selects an action based on the given policy probabilities and values.
+
+        Args:
+            pi (numpy.ndarray): The policy probabilities.
+            values (numpy.ndarray): The values associated with each action.
+            tau (int): The temperature parameter for exploration.
+
+        Returns:
+            tuple: A tuple containing the selected action and its corresponding value.
+        """
         if tau == 0:
             actions = np.argwhere(pi == max(pi))
             action = random.choice(actions)[0]
@@ -135,8 +204,26 @@ class Brain:
         return action, value
 
     def buildMCTS(self, state):
+        """
+        Builds the Monte Carlo Tree Search (MCTS) for the given state.
+
+        Args:
+            state: The initial state of the game.
+
+        Returns:
+            None
+        """
         self.root = Node(state)
         self.mcts = MCTS(self.root)
 
     def changeRootMCTS(self, state):
+        """
+        Changes the root node of the Monte Carlo Tree Search (MCTS) to the specified state.
+
+        Args:
+            state: The new root state for the MCTS.
+
+        Returns:
+            None
+        """
         self.mcts.root = self.mcts.tree[state.id]
