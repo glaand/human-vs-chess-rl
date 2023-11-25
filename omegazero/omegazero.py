@@ -14,9 +14,6 @@ import pandas as pd
 fen_string = "4k3/8/8/8/8/8/R7/3K3R w - - 0 1"
 #fen_string = "r2k3r/8/8/8/8/8/8/3K4 w - - 0 1"
 
-def exploration_decay(exploration_prob, episode, episodes, decay_factor=0.1):
-    decayed_prob = exploration_prob * math.exp(-decay_factor * episode / episodes)
-    return decayed_prob
 
 def save_game_data(episode, values):
     columns = ['episode', 'iteration', 'move', 'player', 'color', 'mcts_value', 'nn_value']
@@ -34,10 +31,10 @@ def save_game_data(episode, values):
     game_data = pd.concat([game_data, df], ignore_index=True)
     game_data.to_csv("game_data.csv", index=False)
 
-def main(episode, exploration_prob):
-    print(f"Running omegazero with episode={episode} and exploration_prob={exploration_prob}")
+def main(episode):
+    print(f"Running omegazero with episode={episode}")
 
-    play_stage = PlayStage(fen_string, exploration_prob, episode)
+    play_stage = PlayStage(fen_string, episode)
     play_stage.play(n=config.NUM_OF_PLAY_GAMES)
     brain = play_stage.getOutput()
     save_game_data(episode, play_stage.all_move_values)
@@ -59,5 +56,4 @@ def main(episode, exploration_prob):
 
 if __name__ == "__main__":
     episode = int(sys.argv[1])
-    exploration_prob = float(sys.argv[2])
-    main(episode, exploration_prob)
+    main(episode)

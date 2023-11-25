@@ -2,7 +2,7 @@
 
 EPISODES=10  # Set the number of episodes here
 INITIAL_EXPLORATION=0.85  # Set the initial exploration probability here
-DECAY_FACTOR=0.6 # Set the decay factor here
+DECAY_FACTOR=0.9 # Set the decay factor here
 
 exploration_prob=$INITIAL_EXPLORATION
 
