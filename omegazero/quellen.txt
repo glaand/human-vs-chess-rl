@@ -1,0 +1,2 @@
+https://www.reddit.com/r/chess/comments/xgxww3/lichess_published_this_graph_of_stockfish_eval_in/
+50 + 50 * (2 / (1 + exp(-0.00368208 * centipawns)) - 1)

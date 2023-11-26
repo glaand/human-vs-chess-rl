@@ -12,7 +12,7 @@ class PlayStage:
         self.initial_state = initial_state
         self.exploration_prob = config.INITIAL_EXPLORATION
         self.decay_factor = config.DECAY_FACTOR
-        self.brain = Brain(episode)
+        self.brain = Brain(episode=episode, is_play_stage=True)
         self.all_move_values = []
         if self.initial_state is None or self.initial_state == "":
             self.initial_state = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR"

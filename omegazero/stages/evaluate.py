@@ -28,7 +28,7 @@ class EvaluateStage:
             "draw": 0,
         }
 
-        new_trained_brain = Brain(self.episode)
+        new_trained_brain = Brain(episode=self.episode, is_play_stage=False)
 
         # @todo: parallelize this
         for i in tqdm(range(n)):
@@ -39,7 +39,10 @@ class EvaluateStage:
             game.setBlackPlayer(StockfishPlayer(new_trained_brain))
 
             game.playUntilFinished()
-            #game.savePGN(f"eval_{self.episode}", "OmegaZero", "Stockfish")
+            
+            # save if last game
+            if i == n-1:
+                game.savePGN(f"eval_ep_{self.episode}", "OmegaZero", "Stockfish")
 
             # get the result
             result = game.gameState.board.result()

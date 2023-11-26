@@ -46,6 +46,8 @@ class GameState:
         if self.board.is_game_over():
             if self.board.is_checkmate():
                 value = 1
+                if newState.board.turn == chess.BLACK:
+                    value = -1
             done = 1
             return (self, value, done)
 
@@ -58,6 +60,8 @@ class GameState:
         if newState.board.is_game_over():
             if newState.board.is_checkmate():
                 value = 1
+                if newState.board.turn == chess.BLACK:
+                    value = -1
             done = 1
 
         return (newState, value, done)
@@ -139,17 +143,17 @@ class Game:
         max_moves = config.MAX_NUMBER_OF_MOVES
         while not self.gameState.board.is_game_over() and current_move < max_moves:
             if self.gameState.turn == chess.WHITE:
-                move, MCTS_value, NN_value = self.whitePlayer.makeMove(self)
+                move, MCTS_value, NN_value, doneFound = self.whitePlayer.makeMove(self)
                 if self.whitePlayer.type == "learning":
-                    self.move_values.append((self.iteration, current_move, "learning", "white", MCTS_value, NN_value[0]))
+                    self.move_values.append((self.iteration, current_move, move, "learning", "white", MCTS_value, NN_value[0], doneFound))
                 else:
-                    self.move_values.append((self.iteration, current_move, "stockfish", "white", MCTS_value, NN_value[0]))
+                    self.move_values.append((self.iteration, current_move, move, "stockfish", "white", MCTS_value, NN_value[0], doneFound))
             else:
-                move, MCTS_value, NN_value = self.blackPlayer.makeMove(self)
+                move, MCTS_value, NN_value, doneFound = self.blackPlayer.makeMove(self)
                 if self.blackPlayer.type == "learning":
-                    self.move_values.append((self.iteration, current_move, "learning", "black", MCTS_value, NN_value[0]))
+                    self.move_values.append((self.iteration, current_move, move, "learning", "black", MCTS_value, NN_value[0], doneFound))
                 else:
-                    self.move_values.append((self.iteration, current_move, "stockfish", "black", MCTS_value, NN_value[0]))
+                    self.move_values.append((self.iteration, current_move, move, "stockfish", "black", MCTS_value, NN_value[0], doneFound))
 
             newBoard = self.gameState.board.copy()
             newBoard.push(move)

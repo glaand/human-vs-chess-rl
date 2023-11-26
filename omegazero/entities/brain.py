@@ -7,18 +7,36 @@ from algorithms.nn import NNManager
 from entities.memory import Memory
 
 class Brain:
-    def __init__(self, episode):
+    def __init__(self, episode, is_play_stage=False):
         self.action_size = 4096
         self.MCTSsimulations = config.MCTS_SIMULATIONS
         self.mcts = None
         self.nn_manager = NNManager(episode)
         self.memory = Memory()
+        self.stockfish_player = None
+        self.is_play_stage = is_play_stage
 
     def learn(self):
         """
         Trains the neural network using the memory buffer.
         """
         self.nn_manager.learn(self.memory)
+
+    def treeHasAction(self, node, stockfish_action):
+        """
+        Checks if the given node has the specified stockfish_action.
+
+        Args:
+            node (Node): The node to check.
+            stockfish_action (str): The stockfish action to check.
+
+        Returns:
+            bool: True if the node has the move, False otherwise.
+        """
+        for action, edge in node.edges:
+            if action == stockfish_action and edge.stats['N'] > 0:
+                return True
+        return False
     
     def simulate(self):
         """
@@ -32,6 +50,8 @@ class Brain:
 
         ##### BACKFILL THE VALUE THROUGH THE TREE
         self.mcts.backFill(leaf, value, breadcrumbs)
+
+        return done
 
     def act(self, state, tau):
         """
@@ -49,28 +69,31 @@ class Brain:
         else:
             self.changeRootMCTS(state)
 
-        #### run the simulation
+        #### run the simulation until one done=1 is found or the number of simulations is reached
+        doneFound = False
         for _ in range(self.MCTSsimulations):
-            self.simulate()
+            done = self.simulate()
+            if done == 1:
+                doneFound = True
+                break
 
         #### get action values
-        pi, values = self.getAV(tau)
+        pi, values = self.getAV()
 
         ####pick the action
         action, value = self.chooseAction(pi, values, tau)
         nextState, _, _ = state.takeAction(action)
         NN_value = self.get_preds(nextState)[0]
 
-        return (action, pi, value, NN_value)
+        return (action, pi, value, NN_value, doneFound)
     
-    def stockfish_act(self, state, stockfish_move, tau):
+    def stockfish_act(self, state, stockfish_move):
         """
         Executes the stockfish_act action in the brain.
 
         Args:
             state (State): The current state of the game.
             stockfish_move (str): The move made by Stockfish.
-            tau (float): The temperature parameter for action selection.
 
         Returns:
             tuple: A tuple containing the action, action probabilities, value, and neural network value.
@@ -80,12 +103,17 @@ class Brain:
         else:
             self.changeRootMCTS(state)
 
-        #### run the simulation
-        for _ in range(self.MCTSsimulations):
-            self.simulate()
+        #### run the simulation until the stockfish_move is reached
+        action = state.getIndexOfAllowedMove(stockfish_move) # debug
+        doneFound = False
+        while self.treeHasAction(self.mcts.root, action) == False:
+            done = self.simulate()
+            if done == 1:
+                doneFound = True
+                break
 
         #### get action values
-        pi, values = self.getAV(tau)
+        pi, values = self.getAV()
 
         ####pick the action
         action = state.getIndexOfAllowedMove(stockfish_move)
@@ -94,7 +122,11 @@ class Brain:
         nextState, _, _ = state.takeAction(action)
         NN_value = self.get_preds(nextState)[0]
 
-        return (action, pi, value, NN_value)
+        return (action, pi, value, NN_value, doneFound)
+    
+    def get_value_from_stockfish(self, state):
+        value = self.stockfish_player.evaluate_position(state)
+        return value
 
     def get_preds(self, state):
         """
@@ -106,13 +138,19 @@ class Brain:
         Returns:
             A tuple containing the predicted value, probabilities, and allowed actions.
         """
+
         game_state_tensor = state.as_tensor()
         # add batch dimension
         game_state_tensor = np.expand_dims(game_state_tensor, axis=0)
         preds = self.nn_manager.predict(game_state_tensor)
         value_array = preds[0].cpu().detach().numpy()
         logits_array = preds[1].cpu().detach().numpy()
-        value = -value_array[0] # minus or not????????? asshole
+
+        # Since i dont know if at the moment the reason why is not working is the NN, i will try the score from stockfish
+        if self.is_play_stage and False:
+            value = np.array([self.get_value_from_stockfish(state)])
+        else:
+            value = value_array[0] # minus or not????????? asshole
 
         logits = logits_array[0]
 
@@ -151,17 +189,13 @@ class Brain:
                     self.mcts.addNode(node)
                 else:
                     node = self.mcts.tree[newState.id]
-
                 newEdge = Edge(leaf, node, probs[idx], action)
                 leaf.edges.append((action, newEdge))
         return ((value, breadcrumbs))
         
-    def getAV(self, tau):
+    def getAV(self):
         """
-        Get the action probabilities and values for the given tau.
-
-        Parameters:
-        tau (int): The temperature parameter for controlling the exploration-exploitation trade-off.
+        Get the action probabilities and values for the root node of the MCTS.
 
         Returns:
         pi (numpy.ndarray): The action probabilities.
@@ -172,10 +206,7 @@ class Brain:
         values = np.zeros(self.action_size, dtype=np.float32)
         
         for action, edge in edges:
-            if tau == 0:
-                pi[action] = 99999
-            else:
-                pi[action] = edge.stats['N']
+            pi[action] = edge.stats['N']
             values[action] = edge.stats['Q']
 
         pi = pi / (np.sum(pi) * 1.0)
@@ -183,10 +214,10 @@ class Brain:
 
     def chooseAction(self, pi, values, tau):
         """
-        Selects an action based on the given policy probabilities and values.
+        Selects an action based on the given policy probability distribution and values.
 
         Args:
-            pi (numpy.ndarray): The policy probabilities.
+            pi (numpy.ndarray): The policy probability distribution.
             values (numpy.ndarray): The values associated with each action.
             tau (int): The temperature parameter for exploration.
 

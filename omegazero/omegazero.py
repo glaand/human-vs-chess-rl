@@ -11,12 +11,12 @@ import sys
 from tqdm import tqdm
 import pandas as pd
 
-fen_string = "4k3/8/8/8/8/8/R7/3K3R w - - 0 1"
+fen_string = "1k6/8/8/8/8/8/PPPPPP2/2KR3R w - - 0 1"
 #fen_string = "r2k3r/8/8/8/8/8/8/3K4 w - - 0 1"
 
 
 def save_game_data(episode, values):
-    columns = ['episode', 'iteration', 'move', 'player', 'color', 'mcts_value', 'nn_value']
+    columns = ['episode', 'iteration', 'move', 'chess_move', 'player', 'color', 'mcts_value', 'nn_value', 'done_found']
 
     # add episode to each row
     values = [tuple([episode] + list(row)) for row in values]
