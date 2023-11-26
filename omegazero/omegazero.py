@@ -11,7 +11,7 @@ import sys
 from tqdm import tqdm
 import pandas as pd
 
-fen_string = "1k6/8/8/8/8/8/PPPPPP2/2KR3R w - - 0 1"
+fen_string = "3k4/8/8/8/8/8/4P3/3K4 w - - 0 1"
 #fen_string = "r2k3r/8/8/8/8/8/8/3K4 w - - 0 1"
 
 
