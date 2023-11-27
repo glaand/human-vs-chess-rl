@@ -121,7 +121,9 @@ class GameState:
                     # Set the corresponding channel to 1
                     tensor[rank][file][index] = 1
 
-        # You can add additional information to the tensor, such as whose turn it is, castling rights, etc.
+        # Player turn, if black than multiply whole tensor by -1
+        if self.board.turn == chess.BLACK:
+            tensor = tensor * 1
 
         return tensor
 

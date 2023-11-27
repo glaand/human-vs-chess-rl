@@ -45,7 +45,7 @@ class PlayStage:
             black_name = "Stockfish"
 
             # choose random player colors
-            if random.random() < 0.5:
+            if random.random() < -0.5:
                 game.setWhitePlayer(self.learning_player)
                 game.setBlackPlayer(self.stockfish_player)
             else:

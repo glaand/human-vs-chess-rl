@@ -75,7 +75,6 @@ class Brain:
             done = self.simulate()
             if done == 1:
                 doneFound = True
-                break
 
         #### get action values
         pi, values = self.getAV()
@@ -110,7 +109,6 @@ class Brain:
             done = self.simulate()
             if done == 1:
                 doneFound = True
-                break
 
         #### get action values
         pi, values = self.getAV()
