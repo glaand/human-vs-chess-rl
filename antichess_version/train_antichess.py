@@ -63,7 +63,7 @@ def create_new_model():
     print("--------------------")
     print(new_model.summary())
     
-    pgn_data = load_pgn_data('/Users/benitorusconi/Downloads/lichess_swiss_2023.04.23_a2vcYLBJ_swiss-fight.pgn')
+    pgn_data = load_pgn_data('antichess_version/lichess_swiss_2023.04.23_a2vcYLBJ_swiss-fight.pgn')
     pretrain_model(new_model, pgn_data)
 
     return new_model
