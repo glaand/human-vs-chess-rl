@@ -19,7 +19,43 @@ from tensorflow.keras.initializers import RandomNormal, RandomUniform
 import chess.pgn
 from tqdm import tqdm  # Import the tqdm function
 
+def pretrain_model(model, pgn_data):
+    print("Pre-training on PGN data...")
+    total_pgn_games = len(pgn_data)
 
+    # Use tqdm to create a progress bar
+    for game_idx, (input_array, output_array) in enumerate(tqdm(pgn_data, desc="Processing", ncols=100), start=1):
+        # Reshape input for the model, if necessary
+        input_array = input_array.reshape((1,) + input_array.shape)
+        output_array = output_array.reshape((1,) + output_array.shape)
+        model.train_on_batch(input_array, output_array)
+
+
+    print("Pretrained model")
+    
+
+def load_pgn_data(pgn_file_path):
+    print("Loading PGN data from {}...",pgn_file_path)
+    pgn_data = []
+    with open(pgn_file_path) as pgn:
+        while True:
+            game = chess.pgn.read_game(pgn)
+            if game is None:
+                break
+            board = game.board()
+            for move in game.mainline_moves():
+                input_array = board_to_input_array(board)
+                output_array = move_to_output_array(move, board.legal_moves)
+                pgn_data.append((input_array, output_array))
+                board.push(move)
+    return pgn_data
+
+# Function to convert a move into an output array
+def move_to_output_array(move, legal_moves):
+    output_array = np.zeros(action_space_size)
+    move_index = list(legal_moves).index(move)
+    output_array[move_index] = 1
+    return output_array
 
 
 
@@ -179,43 +215,7 @@ num_games_played = 0
 
 df = pd.read_csv('results.csv')
 
-def pretrain_model(model, pgn_data):
-    print("Pre-training on PGN data...")
-    total_pgn_games = len(pgn_data)
 
-    # Use tqdm to create a progress bar
-    for game_idx, (input_array, output_array) in enumerate(tqdm(pgn_data, desc="Processing", ncols=100), start=1):
-        # Reshape input for the model, if necessary
-        input_array = input_array.reshape((1,) + input_array.shape)
-        output_array = output_array.reshape((1,) + output_array.shape)
-        model.train_on_batch(input_array, output_array)
-
-
-    print("Pretrained model")
-    
-
-def load_pgn_data(pgn_file_path):
-    print("Loading PGN data from {}...",pgn_file_path)
-    pgn_data = []
-    with open(pgn_file_path) as pgn:
-        while True:
-            game = chess.pgn.read_game(pgn)
-            if game is None:
-                break
-            board = game.board()
-            for move in game.mainline_moves():
-                input_array = board_to_input_array(board)
-                output_array = move_to_output_array(move, board.legal_moves)
-                pgn_data.append((input_array, output_array))
-                board.push(move)
-    return pgn_data
-
-# Function to convert a move into an output array
-def move_to_output_array(move, legal_moves):
-    output_array = np.zeros(action_space_size)
-    move_index = list(legal_moves).index(move)
-    output_array[move_index] = 1
-    return output_array
 # Main training and updating loop
 while True:
 

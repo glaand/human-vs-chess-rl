@@ -70,6 +70,9 @@ move_input = st.text_input("Enter your move:")
 # Process player's move
 if st.button("Make Move"):
     error_message = handle_player_move(move_input)
+    display_chess_board(st.session_state.board)
+    #wait for 100 ms
+    
     if error_message:
         st.error(error_message)
     else:
