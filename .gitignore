@@ -167,3 +167,4 @@ __pycache__/
 #benito logs
 benito/logs/
 omegazero/games/
+antichess_version/oct.pgn

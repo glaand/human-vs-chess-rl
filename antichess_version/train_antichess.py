@@ -22,24 +22,31 @@ from tqdm import tqdm  # Import the tqdm function
 def pretrain_model(model, pgn_data):
     print("Pre-training on PGN data...")
     total_pgn_games = len(pgn_data)
+    history = {'loss': []}  # Initialize a dictionary to store loss values
 
-    # Use tqdm to create a progress bar
     for game_idx, (input_array, output_array) in enumerate(tqdm(pgn_data, desc="Processing", ncols=100), start=1):
-        # Reshape input for the model, if necessary
         input_array = input_array.reshape((1,) + input_array.shape)
         output_array = output_array.reshape((1,) + output_array.shape)
-        model.train_on_batch(input_array, output_array)
-
+        loss = model.train_on_batch(input_array, output_array)
+        history['loss'].append(loss)  # Append the loss to the history dictionary
+    #save to csv
+    history_df = pd.DataFrame(history)
+    history_df.to_csv('pretrain_history.csv', index=False)
 
     print("Pretrained model")
+    return history
+
     
 
 def load_pgn_data(pgn_file_path):
     print("Loading PGN data from {}...",pgn_file_path)
     pgn_data = []
+    i = 0
     with open(pgn_file_path) as pgn:
         while True:
             game = chess.pgn.read_game(pgn)
+            i += 1
+            print("game number: ", i," processed")
             if game is None:
                 break
             board = game.board()
@@ -99,7 +106,7 @@ def create_new_model():
     print("--------------------")
     print(new_model.summary())
     
-    pgn_data = load_pgn_data('antichess_version/lichess_swiss_2023.04.23_a2vcYLBJ_swiss-fight.pgn')
+    pgn_data = load_pgn_data('/Users/benitorusconi/Documents/CDS/05_HS23/Reinforcement Learning (cds-117)/chess_bot/antichess_version/oct.pgn')
     pretrain_model(new_model, pgn_data)
 
     return new_model
@@ -200,7 +207,7 @@ def train_new_player(best_player_model, new_player_model, threshold_win_rate=0.5
 
 # Load or create initial best player model
 try:
-    best_player_model = load_model("/Users/benitorusconi/Documents/CDS/05_HS23/Reinforcement Learning (cds-117)/chess_bot/model/best_player.h5")
+    best_player_model = load_model("/Users/benitorusconi/Documents/CDS/05_HS23/Reinforcement Learning (cds-117)/chess_bot/model/best_player_300k.h5")
 except IOError:
     print("No initial model found. Training a new model.")
     best_player_model = create_new_model()
@@ -213,7 +220,13 @@ exploration_decay_rate = 0.001
 min_exploration_rate = 0.01
 num_games_played = 0
 
-df = pd.read_csv('results.csv')
+
+#check if results.csv exists
+try:
+    df = pd.read_csv('results.csv')
+except IOError:
+    df = pd.DataFrame(columns=['winrate', 'id', 'num_games_played'])
+    df.to_csv('results.csv', index=False)
 
 
 # Main training and updating loop
@@ -231,7 +244,7 @@ while True:
     df.loc[len(df)] = [winrate, id, num_games_played]
     df.to_csv('results.csv', index=False)
 
-    best_player_model.save("/Users/benitorusconi/Documents/CDS/05_HS23/Reinforcement Learning (cds-117)/chess_bot/model/best_player.h5")
+    best_player_model.save("/Users/benitorusconi/Documents/CDS/05_HS23/Reinforcement Learning (cds-117)/chess_bot/model/best_player_300k.h5")
 
 
 

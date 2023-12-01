@@ -26,6 +26,7 @@ def update_q_table(state, action, reward, next_state, model):
     Returns:
         None
     """
+    history = {'loss': []}  # Initialize a dictionary to store loss values
     state_index = state_to_index(state)
     next_state_index = state_to_index(next_state)
     action_index = list(state.legal_moves).index(action)
@@ -43,12 +44,21 @@ def update_q_table(state, action, reward, next_state, model):
         action_idx = batch[:, 1].astype(int)
         q_values[np.arange(batch_size), action_idx] += learning_rate * (batch[:, 2] + discount_factor * np.max(next_q_values, axis=1) - q_values[np.arange(batch_size), action_idx])
         
-        model.train_on_batch(states, q_values)
+        loss = model.train_on_batch(states, q_values)
+        history['loss'].append(loss)
+        
+    
+        
         
         # Clear the experience replay buffer if it exceeds its maximum length
         if len(experience_replay_buffer) > experience_replay_buffer.maxlen:
             experience_replay_buffer.clear()
-        
+    
+    #save_history
+    rl_df = pd.DataFrame(history)
+    rl_df.to_csv('rl_history.csv', index=False)
+    
+    return history
 
 def calculate_reward(board, ai_color):
     """
