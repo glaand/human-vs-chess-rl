@@ -5,6 +5,7 @@ import random
 from collections import deque
 from config import learning_rate, discount_factor
 import numpy as np
+import pandas as pd
 
 experience_replay_buffer = deque(maxlen=10000)
 
