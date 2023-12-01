@@ -18,7 +18,7 @@ import tensorflow as tf
 from tensorflow.keras.initializers import RandomNormal, RandomUniform
 import chess.pgn
 from tqdm import tqdm  # Import the tqdm function
-import pandas as pd
+
 
 
 def pretrain_model(model, pgn_data, batch_size=1028):
