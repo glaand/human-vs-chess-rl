@@ -18,23 +18,41 @@ import tensorflow as tf
 from tensorflow.keras.initializers import RandomNormal, RandomUniform
 import chess.pgn
 from tqdm import tqdm  # Import the tqdm function
+import pandas as pd
 
-def pretrain_model(model, pgn_data):
+
+def pretrain_model(model, pgn_data, batch_size=1028):
     print("Pre-training on PGN data...")
     total_pgn_games = len(pgn_data)
     history = {'loss': []}  # Initialize a dictionary to store loss values
 
+    input_batch = []
+    output_batch = []
+
     for game_idx, (input_array, output_array) in enumerate(tqdm(pgn_data, desc="Processing", ncols=100), start=1):
-        input_array = input_array.reshape((1,) + input_array.shape)
-        output_array = output_array.reshape((1,) + output_array.shape)
-        loss = model.train_on_batch(input_array, output_array)
-        history['loss'].append(loss)  # Append the loss to the history dictionary
-    #save to csv
+        input_batch.append(input_array)
+        output_batch.append(output_array)
+
+        # Check if the current batch is the right size
+        if len(input_batch) == batch_size or game_idx == total_pgn_games:
+            input_batch = np.array(input_batch)
+            output_batch = np.array(output_batch)
+
+            # Train on the batch
+            loss = model.train_on_batch(input_batch, output_batch)
+            history['loss'].append(loss)
+
+            # Clear the current batch
+            input_batch = []
+            output_batch = []
+
+    # Save to csv
     history_df = pd.DataFrame(history)
     history_df.to_csv('pretrain_history.csv', index=False)
 
     print("Pretrained model")
     return history
+
 
     
 
@@ -47,7 +65,7 @@ def load_pgn_data(pgn_file_path):
             game = chess.pgn.read_game(pgn)
             i += 1
             print("game number: ", i," processed")
-            if i >100000 or game is None:
+            if i >25000 or game is None:
                 break
             board = game.board()
             for move in game.mainline_moves():
@@ -107,7 +125,7 @@ def create_new_model():
     print(new_model.summary())
     
     pgn_data = load_pgn_data('/Users/benitorusconi/Documents/CDS/05_HS23/Reinforcement Learning (cds-117)/chess_bot/antichess_version/nov19.pgn')
-    pretrain_model(new_model, pgn_data)
+    pretrain_model(new_model, pgn_data, batch_size=1028)
 
     return new_model
 
