@@ -47,7 +47,7 @@ def load_pgn_data(pgn_file_path):
             game = chess.pgn.read_game(pgn)
             i += 1
             print("game number: ", i," processed")
-            if game is None:
+            if i >100000 or game is None:
                 break
             board = game.board()
             for move in game.mainline_moves():
