@@ -16,15 +16,81 @@ from tensorflow.keras.layers import Input, Conv2D, Flatten, Dense, BatchNormaliz
 from tensorflow.keras.models import Model
 import tensorflow as tf
 from tensorflow.keras.initializers import RandomNormal, RandomUniform
+import chess.pgn
+from tqdm import tqdm  # Import the tqdm function
 
 
 
+def pretrain_model(model, pgn_data, batch_size=1028):
+    print("Pre-training on PGN data...")
+    total_pgn_games = len(pgn_data)
+    history = {'loss': []}  # Initialize a dictionary to store loss values
+
+    input_batch = []
+    output_batch = []
+
+    for game_idx, (input_array, output_array) in enumerate(tqdm(pgn_data, desc="Processing", ncols=100), start=1):
+        input_batch.append(input_array)
+        output_batch.append(output_array)
+
+        # Check if the current batch is the right size
+        if len(input_batch) == batch_size or game_idx == total_pgn_games:
+            input_batch = np.array(input_batch)
+            output_batch = np.array(output_batch)
+
+            # Train on the batch
+            loss = model.train_on_batch(input_batch, output_batch)
+            history['loss'].append(loss)
+
+            # Clear the current batch
+            input_batch = []
+            output_batch = []
+
+    # Save to csv
+    history_df = pd.DataFrame(history)
+    history_df.to_csv('pretrain_history.csv', index=False)
+
+    print("Pretrained model")
+    return history
+
+
+    
+
+def load_pgn_data(pgn_file_path):
+    print("Loading PGN data from {}...",pgn_file_path)
+    pgn_data = []
+    i = 0
+    pretrain_games = random.randint(1000,25000)
+    print("pretrain_games: ", pretrain_games)
+    with open(pgn_file_path) as pgn:
+        while True:
+            game = chess.pgn.read_game(pgn)
+            i += 1
+            print("game number: ", i,"off",pretrain_games," processed")
+            #random number between 10000 and 25000
+
+            if i >pretrain_games or game is None:
+                break
+            board = game.board()
+            for move in game.mainline_moves():
+                input_array = board_to_input_array(board)
+                output_array = move_to_output_array(move, board.legal_moves)
+                pgn_data.append((input_array, output_array))
+                board.push(move)
+    return pgn_data
+
+# Function to convert a move into an output array
+def move_to_output_array(move, legal_moves):
+    output_array = np.zeros(action_space_size)
+    move_index = list(legal_moves).index(move)
+    output_array[move_index] = 1
+    return output_array
 
 
 
 def create_new_model():
     # Randomly choosing initializers add he initializers
-    init_choices = [RandomNormal(mean=0.0, stddev=0.05), RandomUniform(minval=-0.05, maxval=0.05), 'glorot_uniform', 'glorot_normal', 'he_normal', 'he_uniform']
+    init_choices = ['glorot_uniform', 'glorot_normal', 'he_normal', 'he_uniform', 'lecun_normal', 'lecun_uniform', 'random_normal', 'random_uniform']
     conv_initializer = random.choice(init_choices)
     dense_initializer = random.choice(init_choices)
 
@@ -52,9 +118,18 @@ def create_new_model():
     output_layer = Dense(action_space_size, activation='softmax', kernel_initializer=dense_initializer)(dense3)
 
     new_model = Model(inputs=input_layer, outputs=output_layer)
-    new_model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
-                      loss='categorical_crossentropy',
-                      metrics=['accuracy'])
+    new_model.compile(optimizer=tf.keras.optimizers.legacy.Adam(learning_rate=0.001),
+                      loss=['categorical_crossentropy','huber_loss'],
+                      metrics=['mse'])
+    
+    print("New model created with the following initializers:")
+    print("conv_initializer: ", conv_initializer)
+    print("dense_initializer: ", dense_initializer)
+    print("--------------------")
+    print(new_model.summary())
+    
+    pgn_data = load_pgn_data('/Users/benitorusconi/Documents/CDS/05_HS23/Reinforcement Learning (cds-117)/chess_bot/antichess_version/nov19.pgn')
+    pretrain_model(new_model, pgn_data, batch_size=1028)
 
     return new_model
 
@@ -107,7 +182,7 @@ def choose_action(board, model, exploration_prob):
         return chess.Move.from_uci(best_move_uci)
 
 
-def train_new_player(best_player_model, new_player_model, threshold_win_rate=0.55, exploration_prob=0.2):
+def train_new_player(best_player_model, new_player_model, threshold_win_rate=0.51, exploration_prob=0.2):
     new_player_wins = 0
     total_games_played = 0
     win_rate = 0
@@ -142,7 +217,7 @@ def train_new_player(best_player_model, new_player_model, threshold_win_rate=0.5
 
         #condition for too many games played
         
-        if total_games_played > 2500:
+        if total_games_played > 1000:
             id = "player remains after 2.5k games"
             print(f"New player has achieved a win rate of {win_rate}. It did not become the best player.")
             return new_player_model, win_rate, id, total_games_played
@@ -154,23 +229,31 @@ def train_new_player(best_player_model, new_player_model, threshold_win_rate=0.5
 
 # Load or create initial best player model
 try:
-    best_player_model = load_model("model/best_player.h5")
+    best_player_model = load_model("/Users/benitorusconi/Documents/CDS/05_HS23/Reinforcement Learning (cds-117)/chess_bot/model/best_player.h5")
 except IOError:
     print("No initial model found. Training a new model.")
     best_player_model = create_new_model()
-    train_model_self_play(100, best_player_model)
+    train_model_self_play(1000, best_player_model)
 
 # Main training and updating loop
 # Initial Hyperparameters
-initial_exploration_rate = 0.8
+initial_exploration_rate = 0.95
 exploration_decay_rate = 0.001
 min_exploration_rate = 0.01
 num_games_played = 0
 
-df = pd.DataFrame(columns=['win_rate', 'id', 'num_games_played'])
+
+#check if results.csv exists
+try:
+    df = pd.read_csv('results.csv')
+except IOError:
+    df = pd.DataFrame(columns=['winrate', 'id', 'num_games_played'])
+    df.to_csv('results.csv', index=False)
+
 
 # Main training and updating loop
 while True:
+
 
 
     # Rest of the training loop
@@ -183,7 +266,7 @@ while True:
     df.loc[len(df)] = [winrate, id, num_games_played]
     df.to_csv('results.csv', index=False)
 
-    best_player_model.save("best_player.h5")
+    best_player_model.save("/Users/benitorusconi/Documents/CDS/05_HS23/Reinforcement Learning (cds-117)/chess_bot/model/best_player.h5")
 
 
 
