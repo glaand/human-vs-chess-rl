@@ -121,9 +121,11 @@ class GameState:
                     # Set the corresponding channel to 1
                     tensor[rank][file][index] = 1
 
-        # Player turn, if black than multiply whole tensor by -1
-        if self.board.turn == chess.BLACK:
-            tensor = tensor * 1
+        # Add a channel indicating the current player
+        if self.board.turn == chess.WHITE:
+            tensor = np.append(tensor, np.ones((8, 8, 1)), axis=2)
+        else:
+            tensor = np.append(tensor, np.zeros((8, 8, 1)), axis=2)
 
         return tensor
 

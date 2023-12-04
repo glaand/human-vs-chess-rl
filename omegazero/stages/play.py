@@ -41,18 +41,8 @@ class PlayStage:
             self.learning_player.exploration_prob = self.exploration_prob
 
             game = Game(self.initial_state, i)
-            white_name = "OmegaZero"
-            black_name = "Stockfish"
-
-            # choose random player colors
-            if random.random() < -0.5:
-                game.setWhitePlayer(self.learning_player)
-                game.setBlackPlayer(self.stockfish_player)
-            else:
-                game.setWhitePlayer(self.stockfish_player)
-                game.setBlackPlayer(self.learning_player)
-                white_name = "Stockfish"
-                black_name = "OmegaZero"
+            game.setWhitePlayer(self.learning_player)
+            game.setBlackPlayer(self.stockfish_player)
 
             game.playUntilFinished()
             self.all_move_values.extend(game.move_values)

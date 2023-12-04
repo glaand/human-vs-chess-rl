@@ -9,12 +9,25 @@ from entities.memory import Memory
 class Brain:
     def __init__(self, episode, is_play_stage=False):
         self.action_size = 4096
-        self.MCTSsimulations = config.MCTS_SIMULATIONS
         self.mcts = None
         self.nn_manager = NNManager(episode)
         self.memory = Memory()
         self.stockfish_player = None
         self.is_play_stage = is_play_stage
+
+        if self.is_play_stage:
+            config.MCTS_SIMULATIONS = config.TRAINING_MCTS_SIMULATIONS
+            config.MCTS_CPUCT = config.TRAINING_MCTS_CPUCT
+            config.MCTS_EPSILON = config.TRAINING_MCTS_EPSILON
+            config.MCTS_ALPHA = config.TRAINING_MCTS_ALPHA
+
+        else:
+            config.MCTS_SIMULATIONS = config.EVAL_MCTS_SIMULATIONS
+            config.MCTS_CPUCT = config.EVAL_MCTS_CPUCT
+            config.MCTS_EPSILON = config.EVAL_MCTS_EPSILON
+            config.MCTS_ALPHA = config.EVAL_MCTS_ALPHA
+
+        self.MCTSsimulations = config.MCTS_SIMULATIONS
 
     def learn(self):
         """

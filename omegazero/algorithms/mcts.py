@@ -1,4 +1,5 @@
 import numpy as np
+import config
 
 class Node():
 	def __init__(self, state):
@@ -31,9 +32,9 @@ class MCTS():
 	def __init__(self, root):
 		self.root = root
 		self.tree = {}
-		self.cpuct = 1
-		self.epsilon = 0.2
-		self.alpha = 0.8
+		self.cpuct = config.MCTS_CPUCT
+		self.epsilon = config.MCTS_EPSILON
+		self.alpha = config.MCTS_ALPHA
 		self.addNode(root)
 	
 	def __len__(self):
@@ -60,6 +61,7 @@ class MCTS():
 			for action, edge in currentNode.edges:
 				Nb = Nb + edge.stats['N']
 
+			simulationAction = None
 			for idx, (action, edge) in enumerate(currentNode.edges):
 
 				U = self.cpuct * \
@@ -73,9 +75,10 @@ class MCTS():
 					simulationAction = action
 					simulationEdge = edge
 			
-			newState, value, done = currentNode.state.takeAction(simulationAction) #the value of the newState from the POV of the new playerTurn
-			currentNode = simulationEdge.outNode
-			breadcrumbs.append(simulationEdge)
+			if simulationAction is not None:
+				newState, value, done = currentNode.state.takeAction(simulationAction) #the value of the newState from the POV of the new playerTurn
+				currentNode = simulationEdge.outNode
+				breadcrumbs.append(simulationEdge)
 
 		return currentNode, value, done, breadcrumbs
 

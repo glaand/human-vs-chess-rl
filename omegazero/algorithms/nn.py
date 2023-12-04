@@ -25,7 +25,7 @@ class CustomDataset(Dataset):
         return len(self.state_data)
 
     def __getitem__(self, index):
-        state = self.state_data[index]  # Shape (8, 8, 32)
+        state = self.state_data[index]  # Shape (8, 8, 33) # 32 channels for pieces, 1 channel for turn
         policy = self.policy_data[index]  # Shape (4096)
         value = self.value_data[index]  # Shape (1,)
 
@@ -38,11 +38,11 @@ class CustomDataset(Dataset):
 class ConvBlock(nn.Module):
     def __init__(self):
         super(ConvBlock, self).__init__()
-        self.conv1 = nn.Conv2d(32, 128, 3, stride=1, padding=1)
+        self.conv1 = nn.Conv2d(33, 128, 3, stride=1, padding=1)
         self.bn1 = nn.BatchNorm2d(128)
 
     def forward(self, s):
-        s = s.view(-1, 32, 8, 8)
+        s = s.view(-1, 33, 8, 8)
         s = self.conv1(s)
         s = self.bn1(s)
         s = F.relu(s)
