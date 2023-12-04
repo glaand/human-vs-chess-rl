@@ -60,12 +60,16 @@ def load_pgn_data(pgn_file_path):
     print("Loading PGN data from {}...",pgn_file_path)
     pgn_data = []
     i = 0
+    pretrain_games = random.randint(1000,25000)
+    print("pretrain_games: ", pretrain_games)
     with open(pgn_file_path) as pgn:
         while True:
             game = chess.pgn.read_game(pgn)
             i += 1
-            print("game number: ", i," processed")
-            if i >25000 or game is None:
+            print("game number: ", i,"off",pretrain_games," processed")
+            #random number between 10000 and 25000
+
+            if i >pretrain_games or game is None:
                 break
             board = game.board()
             for move in game.mainline_moves():
