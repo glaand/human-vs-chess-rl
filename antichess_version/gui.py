@@ -82,31 +82,35 @@ def handle_player_move(move_input):
         return "Invalid move"
 
 
+def main():
+    if st.session_state.player_color is None:
+        choose_color()
+    else:
+        # Player's move input
+        move_input = st.text_input("Enter your move:")
 
-if st.session_state.player_color is None:
-    choose_color()
-else:
-    # Player's move input
-    move_input = st.text_input("Enter your move:")
+        # Process player's move
+        if st.button("Make Move"):
+            error_message = handle_player_move(move_input)
 
-    # Process player's move
-    if st.button("Make Move"):
-        error_message = handle_player_move(move_input)
+            if error_message:
+                st.error(error_message)
+            else:
+                # Bot's move
+                if not st.session_state.board.is_game_over() and st.session_state.board.turn != (st.session_state.player_color == 'white'):
+                    bot_move = choose_action(st.session_state.board, best_player_model)
+                    st.session_state.board.push(bot_move)
 
-        if error_message:
-            st.error(error_message)
-        else:
-            # Bot's move
-            if not st.session_state.board.is_game_over() and st.session_state.board.turn != (st.session_state.player_color == 'white'):
-                bot_move = choose_action(st.session_state.board, best_player_model)
-                st.session_state.board.push(bot_move)
+        # Update the display after each move
+        display_chess_board(st.session_state.board)
 
-    # Update the display after each move
-    display_chess_board(st.session_state.board)
-
-    # Print result and reset button when the game is over
-    if st.session_state.board.is_game_over():
-        st.write(f"Game over: {st.session_state.board.result()}")
-        if st.button("Reset Game"):
-            reset_game()
-            st.experimental_rerun()
+        # Print result and reset button when the game is over
+        if st.session_state.board.is_game_over():
+            st.write(f"Game over: {st.session_state.board.result()}")
+            if st.button("Reset Game"):
+                reset_game()
+                st.experimental_rerun()
+                
+                
+if __name__ == "__main__":
+    main()
