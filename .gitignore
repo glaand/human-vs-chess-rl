@@ -162,8 +162,7 @@ cython_debug/
 .DS_Store
 #remove pycache from git
 __pycache__/
-#h5
-*.h5
+
 #benito logs
 benito/logs/
 omegazero/games/
