@@ -19,7 +19,7 @@ from tensorflow.keras.initializers import RandomNormal, RandomUniform
 import chess.pgn
 from tqdm import tqdm  # Import the tqdm function
 
-
+pretrain_path = "antichess_version/pretraining_games/lichess_swiss_2023.04.23_a2vcYLBJ_swiss-fight.pgn"
 
 def pretrain_model(model, pgn_data, batch_size=1028):
     print("Pre-training on PGN data...")
@@ -128,7 +128,7 @@ def create_new_model():
     print("--------------------")
     print(new_model.summary())
     
-    pgn_data = load_pgn_data('/Users/benitorusconi/Documents/CDS/05_HS23/Reinforcement Learning (cds-117)/chess_bot/antichess_version/nov19.pgn')
+    pgn_data = load_pgn_data(pretrain_path)
     pretrain_model(new_model, pgn_data, batch_size=1028)
 
     return new_model
@@ -229,7 +229,7 @@ def train_new_player(best_player_model, new_player_model, threshold_win_rate=0.5
 
 # Load or create initial best player model
 try:
-    best_player_model = load_model("/Users/benitorusconi/Documents/CDS/05_HS23/Reinforcement Learning (cds-117)/chess_bot/model/best_player.h5")
+    best_player_model = load_model("model/best_player.h5")
 except IOError:
     print("No initial model found. Training a new model.")
     best_player_model = create_new_model()
@@ -266,7 +266,7 @@ while True:
     df.loc[len(df)] = [winrate, id, num_games_played]
     df.to_csv('results.csv', index=False)
 
-    best_player_model.save("/Users/benitorusconi/Documents/CDS/05_HS23/Reinforcement Learning (cds-117)/chess_bot/model/best_player.h5")
+    best_player_model.save("model/best_player.h5")
 
 
 
