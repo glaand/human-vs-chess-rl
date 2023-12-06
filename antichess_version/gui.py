@@ -20,6 +20,11 @@ if 'player_color' not in st.session_state:
 def display_chess_board(board):
     return st.image(chess.svg.board(board=board, size=200), use_column_width=True)
 
+# Function to reset the game
+def reset_game():
+    st.session_state.board = chess.variant.GiveawayBoard()
+    st.session_state.player_color = None
+
 def choose_action(board, model):
     """
     Chooses an action for giveaway chess given the current board state and a trained Q-function model.
@@ -99,6 +104,9 @@ else:
     # Update the display after each move
     display_chess_board(st.session_state.board)
 
-    # Print result when the game is over
+    # Print result and reset button when the game is over
     if st.session_state.board.is_game_over():
         st.write(f"Game over: {st.session_state.board.result()}")
+        if st.button("Reset Game"):
+            reset_game()
+            st.experimental_rerun()
