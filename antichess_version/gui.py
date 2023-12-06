@@ -6,7 +6,7 @@ import chess.svg
 from board_function import board_to_input_array  # Assuming this is defined in your board_function
 
 # Load the model
-best_player_model = load_model("/Users/benitorusconi/Documents/CDS/05_HS23/Reinforcement Learning (cds-117)/chess_bot/model/best_player.h5")
+best_player_model = load_model("antichess_version/model/best_player_antichess.h5")
 
 
     
