@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import filedialog
 import chess
 import chess.pgn
 from io import BytesIO
@@ -71,10 +72,10 @@ class ChessBoard:
             self.draw_board()
 
 class GUI(tk.Tk):
-    def __init__(self, dir_path, num_games):
+    def __init__(self, num_games):
         super().__init__()
 
-        self.dir_path = dir_path
+        self.dir_path = None
         self.num_games = num_games
 
         self.current_width = 800
@@ -83,6 +84,11 @@ class GUI(tk.Tk):
         self.title("OmegaZero - Evaluate games")
         self.geometry(f"{self.current_width}x{self.current_height}")
         self.resizable(True, True)  # Allow window to be resizable
+
+        self.dir_path = filedialog.askdirectory()
+        if not self.dir_path:
+            print("No folder selected")
+            exit()
         
         # Add Previous Move and Next Move buttons
         self.button_frame = tk.Frame(self)
@@ -122,7 +128,7 @@ class GUI(tk.Tk):
             col = i % 3   # Assuming you want 3 boards in each row
 
             board = ChessBoard(self, row, col)
-            board.load_pgn(f"{self.dir_path}game_{i}.pgn")
+            board.load_pgn(f"{self.dir_path}/game_{i}.pgn")
             board.draw_board()
             self.boards.append(board)
 
@@ -152,6 +158,5 @@ class GUI(tk.Tk):
             board.draw_board()
 
 if __name__ == "__main__":
-    pgn_directory_path = "examples/"
-    app = GUI(dir_path=pgn_directory_path, num_games=9)
+    app = GUI(num_games=9)
     app.mainloop()
