@@ -44,6 +44,9 @@ class PlayStage:
             game.setWhitePlayer(self.learning_player)
             game.setBlackPlayer(self.stockfish_player)
 
+            white_name = "OmegaZero"
+            black_name = "Stockfish"
+
             game.playUntilFinished()
             self.all_move_values.extend(game.move_values)
             self.brain.memory.commit_ltmemory()

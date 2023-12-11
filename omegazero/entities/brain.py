@@ -2,6 +2,7 @@ import numpy as np
 import random
 
 import config
+import chess
 from algorithms.mcts import MCTS, Node, Edge
 from algorithms.nn import NNManager
 from entities.memory import Memory
@@ -18,14 +19,10 @@ class Brain:
         if self.is_play_stage:
             config.MCTS_SIMULATIONS = config.TRAINING_MCTS_SIMULATIONS
             config.MCTS_CPUCT = config.TRAINING_MCTS_CPUCT
-            config.MCTS_EPSILON = config.TRAINING_MCTS_EPSILON
-            config.MCTS_ALPHA = config.TRAINING_MCTS_ALPHA
 
         else:
             config.MCTS_SIMULATIONS = config.EVAL_MCTS_SIMULATIONS
             config.MCTS_CPUCT = config.EVAL_MCTS_CPUCT
-            config.MCTS_EPSILON = config.EVAL_MCTS_EPSILON
-            config.MCTS_ALPHA = config.EVAL_MCTS_ALPHA
 
         self.MCTSsimulations = config.MCTS_SIMULATIONS
 
@@ -94,10 +91,10 @@ class Brain:
 
         ####pick the action
         action, value = self.chooseAction(pi, values, tau)
+        NN_value = self.get_preds(state)[0]
         nextState, _, _ = state.takeAction(action)
-        NN_value = self.get_preds(nextState)[0]
 
-        return (action, pi, value, NN_value, doneFound)
+        return (action, pi, value, NN_value, doneFound, pi[action])
     
     def stockfish_act(self, state, stockfish_move):
         """
@@ -130,10 +127,10 @@ class Brain:
         action = state.getIndexOfAllowedMove(stockfish_move)
         value = values[action]
 
+        NN_value = self.get_preds(state)[0]
         nextState, _, _ = state.takeAction(action)
-        NN_value = self.get_preds(nextState)[0]
 
-        return (action, pi, value, NN_value, doneFound)
+        return (action, pi, value, NN_value, doneFound, pi[action])
     
     def get_value_from_stockfish(self, state):
         value = self.stockfish_player.evaluate_position(state)
@@ -157,11 +154,7 @@ class Brain:
         value_array = preds[0].cpu().detach().numpy()
         logits_array = preds[1].cpu().detach().numpy()
 
-        # Since i dont know if at the moment the reason why is not working is the NN, i will try the score from stockfish
-        if self.is_play_stage and False:
-            value = np.array([self.get_value_from_stockfish(state)])
-        else:
-            value = value_array[0] # minus or not????????? asshole
+        value = value_array[0]
 
         logits = logits_array[0]
 
@@ -238,6 +231,9 @@ class Brain:
         if tau == 0:
             actions = np.argwhere(pi == max(pi))
             action = random.choice(actions)[0]
+            # get list of pi bigger than 0
+            #pi_non_zero = pi[pi > 0]
+            #print(pi_non_zero, action)
         else:
             action_idx = np.random.multinomial(1, pi)
             action = np.where(action_idx==1)[0][0]

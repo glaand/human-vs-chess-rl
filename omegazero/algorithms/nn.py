@@ -121,8 +121,8 @@ class AlphaLoss(torch.nn.Module):
 
     def forward(self, y_value, value, y_policy, policy):
         value_error = (value - y_value) ** 2
-        policy_error = torch.sum((-policy*(1e-8 + y_policy.float()).float().log()), 1)
-        total_error = (value_error.view(-1).float() + policy_error).mean()
+        policy_error = -torch.sum(policy * torch.log(y_policy + 1e-8))
+        total_error = value_error.view(-1).float() + policy_error
         return total_error
     
 class NNManager():

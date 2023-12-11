@@ -20,22 +20,22 @@ class LearningPlayer(Player):
 
     def getExplorativeMove(self, game):
         tau = 1
-        action, pi, MCTS_value, NN_value, doneFound = self.brain.act(game.gameState, tau)
+        action, pi, MCTS_value, NN_value, doneFound, action_prob = self.brain.act(game.gameState, tau)
         self.brain.memory.commit_stmemory(game.identities, game.gameState, pi, MCTS_value)
-        return game.gameState.getAllowedActionByIndex(action), MCTS_value, NN_value, doneFound
+        return game.gameState.getAllowedActionByIndex(action), MCTS_value, NN_value, doneFound, action_prob
     
     def getExploitativeMove(self, game):
         tau = 0
-        action, pi, MCTS_value, NN_value, doneFound = self.brain.act(game.gameState, tau)
+        action, pi, MCTS_value, NN_value, doneFound, action_prob = self.brain.act(game.gameState, tau)
         self.brain.memory.commit_stmemory(game.identities, game.gameState, pi, MCTS_value)
-        return game.gameState.getAllowedActionByIndex(action), MCTS_value, NN_value, doneFound
+        return game.gameState.getAllowedActionByIndex(action), MCTS_value, NN_value, doneFound, action_prob
 
     def makeMove(self, game):
         if random.random() < self.exploration_prob:
-            move, MCTS_value, NN_value, doneFound = self.getExplorativeMove(game)
+            move, MCTS_value, NN_value, doneFound, action_prob = self.getExplorativeMove(game)
         else:
-            move, MCTS_value, NN_value, doneFound = self.getExploitativeMove(game)
-        return chess.Move.from_uci(move), MCTS_value, NN_value, doneFound
+            move, MCTS_value, NN_value, doneFound, action_prob = self.getExploitativeMove(game)
+        return chess.Move.from_uci(move), MCTS_value, NN_value, doneFound, action_prob
 
 class StockfishPlayer(Player):
     stockfish_binary_path = os.path.join(os.path.dirname(__file__), "..", "stockfish.bin")
@@ -68,6 +68,6 @@ class StockfishPlayer(Player):
     def makeMove(self, game):
         self.stockfish_engine.set_fen_position(game.gameState.board.fen())
         move = self.stockfish_engine.get_best_move()
-        action, pi, MCTS_value, NN_value, doneFound = self.brain.stockfish_act(game.gameState, move)
+        action, pi, MCTS_value, NN_value, doneFound, action_prob = self.brain.stockfish_act(game.gameState, move)
         self.brain.memory.commit_stmemory(game.identities, game.gameState, pi, MCTS_value)
-        return chess.Move.from_uci(move), MCTS_value, NN_value, doneFound
+        return chess.Move.from_uci(move), MCTS_value, NN_value, doneFound, action_prob

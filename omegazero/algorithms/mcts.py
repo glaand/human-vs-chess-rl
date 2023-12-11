@@ -23,7 +23,6 @@ class Edge():
 		self.action = action
 		self.stats =  {
 			'N': 0,
-			'W': 0,
 			'Q': 0,
 			'P': prior,
 		}			
@@ -33,8 +32,6 @@ class MCTS():
 		self.root = root
 		self.tree = {}
 		self.cpuct = config.MCTS_CPUCT
-		self.epsilon = config.MCTS_EPSILON
-		self.alpha = config.MCTS_ALPHA
 		self.addNode(root)
 	
 	def __len__(self):
@@ -50,13 +47,6 @@ class MCTS():
 		while not currentNode.isLeaf():		
 			maxQU = -99999
 
-			if currentNode == self.root:
-				epsilon = self.epsilon
-				nu = np.random.dirichlet([self.alpha] * len(currentNode.edges))
-			else:
-				epsilon = 0
-				nu = [0] * len(currentNode.edges)
-
 			Nb = 0
 			for action, edge in currentNode.edges:
 				Nb = Nb + edge.stats['N']
@@ -64,10 +54,7 @@ class MCTS():
 			simulationAction = None
 			for idx, (action, edge) in enumerate(currentNode.edges):
 
-				U = self.cpuct * \
-					((1-epsilon) * edge.stats['P'] + epsilon * nu[idx] )  * \
-					np.sqrt(Nb) / (1 + edge.stats['N'])
-					
+				U = self.cpuct * edge.stats['P'] * (np.sqrt(Nb) / (1 + edge.stats['N']))
 				Q = edge.stats['Q']
 
 				if Q + U > maxQU:
@@ -91,10 +78,9 @@ class MCTS():
 				direction = 1
 			else:
 				direction = -1
-				
+			
+			edge.stats['Q'] = (edge.stats['N'] * edge.stats['Q'] + (value * direction)) / (edge.stats['N'] + 1)
 			edge.stats['N'] = edge.stats['N'] + 1
-			edge.stats['W'] = edge.stats['W'] + value * direction
-			edge.stats['Q'] = edge.stats['W'] / edge.stats['N']
 
 	def addNode(self, node):
 		self.tree[node.id] = node
