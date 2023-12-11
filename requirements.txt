@@ -7,3 +7,4 @@ pandas==2.1.1
 matplotlib==3.8.0
 tensorflow==2.14.0
 stockfish==3.28.0
+cairosvg

@@ -19,7 +19,7 @@ from tensorflow.keras.initializers import RandomNormal, RandomUniform
 import chess.pgn
 from tqdm import tqdm  # Import the tqdm function
 
-
+pretrain_path = "antichess_version/pretraining_games/lichess_swiss_2023.04.23_a2vcYLBJ_swiss-fight.pgn"
 
 def pretrain_model(model, pgn_data, batch_size=1028):
     print("Pre-training on PGN data...")
@@ -128,7 +128,7 @@ def create_new_model():
     print("--------------------")
     print(new_model.summary())
     
-    pgn_data = load_pgn_data('/Users/benitorusconi/Documents/CDS/05_HS23/Reinforcement Learning (cds-117)/chess_bot/antichess_version/nov19.pgn')
+    pgn_data = load_pgn_data(pretrain_path)
     pretrain_model(new_model, pgn_data, batch_size=1028)
 
     return new_model
@@ -224,49 +224,48 @@ def train_new_player(best_player_model, new_player_model, threshold_win_rate=0.5
 
             
 
+def main():
 
 
+    # Load or create initial best player model
+    try:
+        best_player_model = load_model("model/best_player.h5")
+    except IOError:
+        print("No initial model found. Training a new model.")
+        best_player_model = create_new_model()
+        train_model_self_play(1000, best_player_model)
 
-# Load or create initial best player model
-try:
-    best_player_model = load_model("/Users/benitorusconi/Documents/CDS/05_HS23/Reinforcement Learning (cds-117)/chess_bot/model/best_player.h5")
-except IOError:
-    print("No initial model found. Training a new model.")
-    best_player_model = create_new_model()
-    train_model_self_play(1000, best_player_model)
-
-# Main training and updating loop
-# Initial Hyperparameters
-initial_exploration_rate = 0.95
-exploration_decay_rate = 0.001
-min_exploration_rate = 0.01
-num_games_played = 0
-
-
-#check if results.csv exists
-try:
-    df = pd.read_csv('results.csv')
-except IOError:
-    df = pd.DataFrame(columns=['winrate', 'id', 'num_games_played'])
-    df.to_csv('results.csv', index=False)
+    # Main training and updating loop
+    # Initial Hyperparameters
+    initial_exploration_rate = 0.95
+    exploration_decay_rate = 0.001
+    min_exploration_rate = 0.01
+    num_games_played = 0
 
 
-# Main training and updating loop
-while True:
+    #check if results.csv exists
+    try:
+        df = pd.read_csv('results.csv')
+    except IOError:
+        df = pd.DataFrame(columns=['winrate', 'id', 'num_games_played'])
+        df.to_csv('results.csv', index=False)
 
 
+    # Main training and updating loop
+    while True:
+        # Rest of the training loop
+        new_player_model = create_new_model()
+        print("new challenger")
+        print("--------------------")
+        best_player_model, winrate, id, num_games_played = train_new_player(best_player_model, new_player_model)
 
-    # Rest of the training loop
-    new_player_model = create_new_model()
-    print("new challenger")
-    print("--------------------")
-    best_player_model, winrate, id, num_games_played = train_new_player(best_player_model, new_player_model)
+        # Write the results to a new row in the results df
+        df.loc[len(df)] = [winrate, id, num_games_played]
+        df.to_csv('results.csv', index=False)
 
-    # Write the results to a new row in the results df
-    df.loc[len(df)] = [winrate, id, num_games_played]
-    df.to_csv('results.csv', index=False)
-
-    best_player_model.save("/Users/benitorusconi/Documents/CDS/05_HS23/Reinforcement Learning (cds-117)/chess_bot/model/best_player.h5")
+        best_player_model.save("model/best_player.h5")
 
 
+if __name__ == "__main__":
+    main()
 

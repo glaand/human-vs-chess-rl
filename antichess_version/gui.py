@@ -6,15 +6,24 @@ import chess.svg
 from board_function import board_to_input_array  # Assuming this is defined in your board_function
 
 # Load the model
-best_player_model = load_model("/Users/benitorusconi/Documents/CDS/05_HS23/Reinforcement Learning (cds-117)/chess_bot/model/best_player.h5")
+best_player_model = load_model("antichess_version/model/best_player_antichess.h5")
 
+
+    
 # Initialize session state
 if 'board' not in st.session_state:
     st.session_state.board = chess.variant.GiveawayBoard()
+if 'player_color' not in st.session_state:
+    st.session_state.player_color = None
 
 # Display function
 def display_chess_board(board):
     return st.image(chess.svg.board(board=board, size=200), use_column_width=True)
+
+# Function to reset the game
+def reset_game():
+    st.session_state.board = chess.variant.GiveawayBoard()
+    st.session_state.player_color = None
 
 def choose_action(board, model):
     """
@@ -47,6 +56,16 @@ def choose_action(board, model):
     best_move_uci = legal_moves_list[min(best_move_index, len(legal_moves_list)-1)].uci()
     return chess.Move.from_uci(best_move_uci)
 
+def choose_color():
+    color = st.radio("Choose your color", ('White', 'Black'))
+    if st.button("Confirm Color"):
+        st.session_state.player_color = 'white' if color == 'White' else 'black'
+        # If the player chooses black, the bot makes the first move
+        if st.session_state.player_color == 'black':
+            bot_move = choose_action(st.session_state.board, best_player_model)
+            st.session_state.board.push(bot_move)
+        st.experimental_rerun()
+
 def handle_player_move(move_input):
     try:
         move = chess.Move.from_uci(move_input)
@@ -63,26 +82,35 @@ def handle_player_move(move_input):
         return "Invalid move"
 
 
-
-# Player's move input
-move_input = st.text_input("Enter your move:")
-
-# Process player's move
-if st.button("Make Move"):
-    error_message = handle_player_move(move_input)
-
-    
-    if error_message:
-        st.error(error_message)
+def main():
+    if st.session_state.player_color is None:
+        choose_color()
     else:
-        # Bot's move
-        if not st.session_state.board.is_game_over():
-            bot_move = choose_action(st.session_state.board, best_player_model)
-            st.session_state.board.push(bot_move)
+        # Player's move input
+        move_input = st.text_input("Enter your move:")
 
-# Update the display after each move
-display_chess_board(st.session_state.board)
+        # Process player's move
+        if st.button("Make Move"):
+            error_message = handle_player_move(move_input)
 
-# Print result when the game is over
-if st.session_state.board.is_game_over():
-    st.write(f"Game over: {st.session_state.board.result()}")
+            if error_message:
+                st.error(error_message)
+            else:
+                # Bot's move
+                if not st.session_state.board.is_game_over() and st.session_state.board.turn != (st.session_state.player_color == 'white'):
+                    bot_move = choose_action(st.session_state.board, best_player_model)
+                    st.session_state.board.push(bot_move)
+
+        # Update the display after each move
+        display_chess_board(st.session_state.board)
+
+        # Print result and reset button when the game is over
+        if st.session_state.board.is_game_over():
+            st.write(f"Game over: {st.session_state.board.result()}")
+            if st.button("Reset Game"):
+                reset_game()
+                st.experimental_rerun()
+                
+                
+if __name__ == "__main__":
+    main()

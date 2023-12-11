@@ -1,0 +1,16 @@
+[Event "eval_ep_5"]
+[Site "?"]
+[Date "????.??.??"]
+[Round "?"]
+[White "OmegaZero"]
+[Black "Stockfish"]
+[Result "1/2-1/2"]
+[FEN "k7/8/8/8/8/8/8/1K5R w - - 0 1"]
+[SetUp "1"]
+
+1. Kb2 Ka7 2. Ra1+ Kb7 3. Kc2 Kc7 4. Ra3 Kb6 5. Ra1 Kc6 6. Rb1 Kc7 7. Ra1 Kb6
+8. Rb1+ Kc7 9. Ra1 Kb6 10. Rb1+ Ka5 11. Ra1+ Kb5 12. Rb1+ Ka4 13. Ra1+ Kb5 14.
+Rb1+ Ka4 15. Ra1+ Kb5 16. Rb1+ Ka5 17. Ra1+ Kb5 18. Rb1+ Kc4 19. Ra1 Kd4 20.
+Rb1 Ke3 21. Ra1 Kf2 22. Ra6 Ke3 23. Ra2 Ke2 24. Kc1+ Ke1 25. Ra3 Ke2 26. Kb1
+Kd2 27. Ra2+ Ke1 28. Rb2 Kf1 29. Rf2+ Kxf2 1/2-1/2
+
