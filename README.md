@@ -97,7 +97,7 @@ Our project consists of two approaches: Deep Q-Learning and Deep Q-Learning with
 
 ## ⚙️ Modules
 
-<details closed><summary>Root</summary>
+<details><summary>Root</summary>
 
 | File                            | Summary                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | ---                             | ---                                                                                                                                                                                                                                                                                                                                                                                                                             |
@@ -105,7 +105,7 @@ Our project consists of two approaches: Deep Q-Learning and Deep Q-Learning with
 
 </details>
 
-<details closed><summary>Antichess</summary>
+<details><summary>Antichess</summary>
 
 | File                              | Summary                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | ---                               | ---                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
@@ -117,7 +117,7 @@ Our project consists of two approaches: Deep Q-Learning and Deep Q-Learning with
 
 </details>
 
-<details closed><summary>Gui</summary>
+<details><summary>Gui</summary>
 
 | File                  | Summary                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | ---                   | ---                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
@@ -125,7 +125,7 @@ Our project consists of two approaches: Deep Q-Learning and Deep Q-Learning with
 
 </details>
 
-<details closed><summary>Exploration</summary>
+<details><summary>Exploration</summary>
 
 | File                                       | Summary                                                                                                                                                                                                                                                                                                                                                                                            |
 | ---                                        | ---                                                                                                                                                                                                                                                                                                                                                                   |
@@ -134,7 +134,7 @@ Our project consists of two approaches: Deep Q-Learning and Deep Q-Learning with
 
 </details>
 
-<details closed><summary>Omegazero</summary>
+<details><summary>Omegazero</summary>
 
 | File                           | Summary                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | ---                            | ---                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
@@ -147,7 +147,7 @@ Our project consists of two approaches: Deep Q-Learning and Deep Q-Learning with
 
 </details>
 
-<details closed><summary>Entities</summary>
+<details><summary>Entities</summary>
 
 | File                     | Summary                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | ---                      | ---                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
@@ -158,7 +158,7 @@ Our project consists of two approaches: Deep Q-Learning and Deep Q-Learning with
 
 </details>
 
-<details closed><summary>Stages</summary>
+<details><summary>Stages</summary>
 
 | File                       | Summary                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | ---                        | ---                                                                                                                                                                                                                                                                                                                                                                                                                                   |
@@ -168,7 +168,7 @@ Our project consists of two approaches: Deep Q-Learning and Deep Q-Learning with
 
 </details>
 
-<details closed><summary>Algorithms</summary>
+<details><summary>Algorithms</summary>
 
 | File                   | Summary                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | ---                    | ---                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
