@@ -21,13 +21,31 @@ import os
 import sys
 
 current_path = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(current_path + '/../antichess_version')
+sys.path.append(current_path + '/../antichess')
 from board_function import board_to_input_array
 
 # Load the model
-best_player_model = load_model("antichess_version/model/best_player_antichess.h5")
+best_player_model = load_model("antichess/model/best_player_antichess.h5")
 
 class AntichessApp:
+    """
+    A class representing the Antichess application.
+
+    Attributes:
+        root (tk.Tk): The root window of the application.
+        board (chess.variant.GiveawayBoard): The chess board.
+        player_color (str): The color chosen by the player.
+
+    Methods:
+        __init__(self, root): Initializes the AntichessApp object.
+        choose_color(self): Displays the color selection interface.
+        confirm_color(self): Confirms the player's color choice.
+        make_move(self): Handles the player's move.
+        make_bot_move(self): Makes a move for the bot.
+        choose_action(self): Chooses the best action for the bot.
+        update_board_display(self): Updates the display of the chess board.
+        reset_game(self): Resets the game to the initial state.
+    """
     def __init__(self, root):
         self.root = root
 
@@ -136,6 +154,25 @@ class AntichessApp:
         self.confirm_color()
 
 class ChessBoard:
+    """
+    Represents a chess board in the GUI.
+
+    Attributes:
+    - gui_obj: The GUI object associated with the chess board.
+    - img: The image of the chess board.
+    - game_moves: A list of moves in the chess game.
+    - current_move: The index of the current move.
+    - row: The row position of the chess board.
+    - col: The column position of the chess board.
+    - states: A list of chess board states.
+    - photo_img: The image of the chess board as a PhotoImage.
+
+    Methods:
+    - load_pgn(pgn_file_path): Loads a PGN file and initializes the chess board.
+    - draw_board(): Draws the chess board on the GUI canvas.
+    - prev_move(): Moves to the previous move in the game.
+    - next_move(): Moves to the next move in the game.
+    """
     def __init__(self, gui_obj, row, col):
         self.gui_obj = gui_obj
         self.img = None
@@ -147,6 +184,15 @@ class ChessBoard:
         self.photo_img = None
 
     def load_pgn(self, pgn_file_path):
+        """
+        Loads a PGN file and initializes the chess board.
+
+        Parameters:
+        - pgn_file_path: The file path of the PGN file.
+
+        Raises:
+        - Exception: If there is an error reading the PGN file.
+        """
         try:
             with open(pgn_file_path, "r") as file:
                 game = chess.pgn.read_game(file)
@@ -157,6 +203,9 @@ class ChessBoard:
             print(f"Error reading PGN file: {e}")
 
     def draw_board(self):
+        """
+        Draws the chess board on the GUI canvas.
+        """
         # Calculate the position based on canvas size and percentage
         min_size = min(self.gui_obj.current_width, self.gui_obj.current_height)
         x = self.col * (min_size // 3)
@@ -183,6 +232,9 @@ class ChessBoard:
         self.gui_obj.canvas.create_image(x, y, anchor=tk.NW, image=self.photo_img)
 
     def prev_move(self):
+        """
+        Moves to the previous move in the game.
+        """
         # Get the previous move from the game
         if self.current_move > 0:
             self.chessboard = self.states[self.current_move-1].copy()
@@ -190,6 +242,9 @@ class ChessBoard:
             self.draw_board()
 
     def next_move(self):
+        """
+        Moves to the next move in the game.
+        """
         # Get the next move from the game
         if self.current_move < len(self.game_moves):
             if self.current_move + 1 not in range(len(self.states)):
@@ -201,6 +256,30 @@ class ChessBoard:
             self.draw_board()
 
 class GUI(tk.Tk):
+    """
+    The main GUI class for the ChessbotRL application.
+
+    Args:
+        num_games (int): The number of games to load.
+
+    Attributes:
+        dir_path (str): The path of the selected folder.
+        num_games (int): The number of games to load.
+        current_width (int): The current width of the GUI window.
+        current_height (int): The current height of the GUI window.
+        title (str): The title of the GUI window.
+        tab_parent (ttk.Notebook): The notebook widget for managing tabs.
+        tab_antichess (tk.Frame): The frame for the Antichess tab.
+        tab_omegazero (tk.Frame): The frame for the OmegaZero tab.
+        antichess_app (AntichessApp): The Antichess application.
+        button_frame (tk.Frame): The frame for the buttons.
+        next_button (tk.Button): The button for the next move.
+        prev_button (tk.Button): The button for the previous move.
+        reset_button (tk.Button): The button for resetting the boards.
+        select_folder_button (tk.Button): The button for selecting a folder.
+        canvas (tk.Canvas): The canvas for drawing the boards.
+        boards (list): The list of ChessBoard objects.
+    """
     def __init__(self, num_games):
         super().__init__()
 
