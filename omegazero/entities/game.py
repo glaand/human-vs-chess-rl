@@ -8,13 +8,35 @@ import config
 from .player import Player
 
 class GameState:
+    """
+    Represents the state of a chess game.
+
+    Attributes:
+        action_space (numpy.ndarray): The action space of the game.
+        board (chess.Board): The chess board.
+    """
 
     def __init__(self, fen=None):
+        """
+        Initializes a new instance of the GameState class.
+
+        Args:
+            fen (str, optional): The FEN notation of the chess board. Defaults to None.
+        """
         self.action_space = np.zeros(shape=(64, 64))
         if fen is not None:
             self.board = chess.Board(fen)
 
     def getAllowedActionByIndex(self, index):
+        """
+        Gets the allowed action at the specified index.
+
+        Args:
+            index (int): The index of the action.
+
+        Returns:
+            str: The UCI notation of the allowed move, or None if the move is not allowed.
+        """
         action_tuple = [index // 64, index % 64]
         moves = [[x.from_square, x.to_square, x.uci()] for x in self.board.generate_legal_moves()]
         for move in moves:
@@ -23,7 +45,18 @@ class GameState:
         return None
     
     def getIndexOfAllowedMove(self, move):
+        """
+        Gets the index of the allowed move.
 
+        Args:
+            move (str): The UCI notation of the move.
+
+        Returns:
+            int: The index of the allowed move.
+
+        Raises:
+            Exception: If the move is invalid.
+        """
         found = False
         from_square = None
         to_square = None
@@ -40,6 +73,15 @@ class GameState:
         return index
 
     def takeAction(self, action):
+        """
+        Takes an action and returns the new state, value, and done flag.
+
+        Args:
+            action (int): The index of the action.
+
+        Returns:
+            tuple: A tuple containing the new state, value, and done flag.
+        """
         value = 0
         done = 0
         
@@ -68,14 +110,32 @@ class GameState:
 
     @property
     def id(self):
+        """
+        Gets the FEN notation of the chess board.
+
+        Returns:
+            str: The FEN notation of the chess board.
+        """
         return self.board.fen()
 
     @property
     def turn(self):
+        """
+        Gets the current turn.
+
+        Returns:
+            bool: True if it's white's turn, False if it's black's turn.
+        """
         return self.board.turn
     
     @property
     def allowedActions(self):
+        """
+        Gets the allowed actions.
+
+        Returns:
+            numpy.ndarray: The allowed actions.
+        """
         moves = [[x.from_square, x.to_square] for x in self.board.generate_legal_moves()]
         self.action_space = np.zeros((64, 64), dtype=int)
         if len(moves) > 0:    
@@ -85,14 +145,23 @@ class GameState:
 
     @property
     def allowedActionsIndexes(self):
-        # Reshape the 64x64 matrix to a 4096x1 array
+        """
+        Gets the indexes of the allowed actions.
+
+        Returns:
+            numpy.ndarray: The indexes of the allowed actions.
+        """
         allowedActions = self.allowedActions.reshape(4096)
-        # Get indexes of allowed actions
         allowedActionIndexes = np.where(allowedActions == 1)[0]
         return allowedActionIndexes
     
     def as_tensor(self):
-        # Define a dictionary to map piece types to channel indices
+        """
+        Converts the chess board to a tensor representation.
+
+        Returns:
+            numpy.ndarray: The tensor representation of the chess board.
+        """
         piece_to_index = {
             chess.PAWN: 0,
             chess.KNIGHT: 1,
@@ -102,26 +171,20 @@ class GameState:
             chess.KING: 5,
         }
 
-        # Initialize the tensor with zeros
         ALL_PIECES = 32
         
         tensor = np.zeros((8, 8, ALL_PIECES), dtype=np.int8)
 
-        # Loop through the board and fill the tensor
         for rank in range(8):
             for file in range(8):
                 square = chess.square(file, rank)
                 piece = self.board.piece_at(square)
 
                 if piece is not None:
-                    # Determine the color of the piece
                     color = int(piece.color)
-                    # Calculate the index for the piece-color combination
                     index = piece_to_index[piece.piece_type] + (color * 6)
-                    # Set the corresponding channel to 1
                     tensor[rank][file][index] = 1
 
-        # Add a channel indicating the current player
         if self.board.turn == chess.WHITE:
             tensor = np.append(tensor, np.ones((8, 8, 1)), axis=2)
         else:
@@ -131,18 +194,43 @@ class GameState:
 
 class Game:
     def __init__(self, fen: str, iteration: int):
+        """
+        Initializes a new instance of the Game class.
+
+        Args:
+            fen (str): The FEN representation of the initial board position.
+            iteration (int): The iteration number of the game.
+        """
         self.fen = fen
         self.iteration = iteration
         self.gameState = GameState(fen)
         self.move_values = []
 
     def setWhitePlayer(self, player: Player):
+        """
+        Sets the white player in the game.
+
+        Args:
+            player (Player): The white player.
+        """
         self.whitePlayer = player
 
     def setBlackPlayer(self, player: Player):
+        """
+        Sets the black player in the game.
+
+        Args:
+            player (Player): The black player.
+        """
         self.blackPlayer = player
 
     def playUntilFinished(self):
+        """
+        Plays the game until it is finished.
+
+        The game is played by alternating moves between the white and black players until the game is over or the maximum number of moves is reached.
+        The move values are recorded during the game.
+        """
         current_move = 0
         max_moves = config.MAX_NUMBER_OF_MOVES
         while not self.gameState.board.is_game_over() and current_move < max_moves:
@@ -166,6 +254,14 @@ class Game:
             current_move += 1
 
     def savePGN(self, name, white_name="OmegaZero", black_name="Stockfish"):
+        """
+        Saves the game as a PGN file.
+
+        Args:
+            name (str): The name of the game.
+            white_name (str, optional): The name of the white player. Defaults to "OmegaZero".
+            black_name (str, optional): The name of the black player. Defaults to "Stockfish".
+        """
         # Initialize a counter to add to the filename if it already exists
         counter = 1
         file_name = f"games/{name}_{counter}.pgn"
@@ -189,9 +285,25 @@ class Game:
             pgn_game.accept(exporter)
     
     def getGameState(self):
+        """
+        Returns the current state of the game.
+
+        Returns:
+            GameState: The current state of the game.
+        """
         return self.gameState
     
     def identities(self, state, actionValues):
+        """
+        Converts the action values into a list of state-action pairs.
+
+        Args:
+            state: The current state of the game.
+            actionValues: The action values as a 4096-dimensional vector.
+
+        Returns:
+            list: A list of state-action pairs.
+        """
         # convert actionValues 4096 vector into 64x64 matrix
         actionValues = actionValues.reshape((64, 64))
         identities = [(state, actionValues)]

@@ -16,6 +16,16 @@ fen_string = "8/8/3k4/8/3K4/8/8/7R w - - 0 1"
 
 
 def save_game_data(episode, values):
+    """
+    Save the game data to a CSV file.
+
+    Parameters:
+    episode (int): The episode number.
+    values (list): A list of tuples containing the game data.
+
+    Returns:
+    None
+    """
     columns = ['episode', 'iteration', 'move', 'chess_move', 'player', 'color', 'mcts_value', 'nn_value', 'done_found', 'action_prob']
 
     # add episode to each row
@@ -32,6 +42,15 @@ def save_game_data(episode, values):
     game_data.to_csv("game_data.csv", index=False)
 
 def main(episode):
+    """
+    Run the OmegaZero algorithm for a given episode.
+
+    Args:
+        episode (int): The episode number.
+
+    Returns:
+        None
+    """
     print(f"Running omegazero with episode={episode}")
 
     play_stage = PlayStage(fen_string, episode)

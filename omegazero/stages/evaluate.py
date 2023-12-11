@@ -8,6 +8,18 @@ from entities.brain import Brain
 
 class EvaluateStage:
     def __init__(self, initial_state: str, episode):
+        """
+        Initializes the EvaluateStage object.
+
+        Args:
+            initial_state (str): The initial state of the game.
+            episode: The episode number.
+
+        Attributes:
+            metrics (dict): A dictionary to store the evaluation metrics.
+            initial_state (str): The initial state of the game.
+            episode: The episode number.
+        """
         self.metrics = None
         self.initial_state = initial_state
         self.episode = episode
@@ -20,6 +32,15 @@ class EvaluateStage:
         print("---------------------")
 
     def evaluate(self, n):
+        """
+        Evaluates the trained brain by playing a specified number of games against Stockfish.
+
+        Args:
+            n (int): The number of games to play.
+
+        Returns:
+            None
+        """
         print(f"- Evaluating by playing {n} games against stockfish, please wait...")
 
         self.metrics = {
@@ -57,4 +78,10 @@ class EvaluateStage:
                 self.metrics["losses"] += 1
 
     def getOutput(self):
+        """
+        Returns the evaluation metrics.
+
+        Returns:
+            dict: The evaluation metrics.
+        """
         return self.metrics

@@ -9,6 +9,13 @@ from entities.memory import Memory
 
 class Brain:
     def __init__(self, episode, is_play_stage=False):
+        """
+        Initializes a Brain object.
+
+        Args:
+            episode (int): The episode number.
+            is_play_stage (bool, optional): Flag indicating if it is the play stage. Defaults to False.
+        """
         self.action_size = 4096
         self.mcts = None
         self.nn_manager = NNManager(episode)
@@ -133,6 +140,15 @@ class Brain:
         return (action, pi, value, NN_value, doneFound, pi[action])
     
     def get_value_from_stockfish(self, state):
+        """
+        Gets the value of the current game state from Stockfish.
+
+        Args:
+            state (State): The current state of the game.
+
+        Returns:
+            float: The value of the game state.
+        """
         value = self.stockfish_player.evaluate_position(state)
         return value
 
@@ -144,7 +160,7 @@ class Brain:
             state: The game state.
 
         Returns:
-            A tuple containing the predicted value, probabilities, and allowed actions.
+            tuple: A tuple containing the predicted value, probabilities, and allowed actions.
         """
 
         game_state_tensor = state.as_tensor()
