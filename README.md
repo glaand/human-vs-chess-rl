@@ -23,19 +23,23 @@ Chessbot RL</h1>
 - [📍 Overview](#-overview)
 - [📦 Features](#-features)
 - [📂 Repository Structure](#-repository-structure)
-- [⚙️ Modules](#modules)
+- [⚙️ Modules](#️-modules)
 - [🚀 Getting Started](#-getting-started)
-    - [🔧 Installation](#-installation)
-    - [🤖 Running ](#-running-)
+  - [🔧 Installation](#-installation)
+  - [🤖 Running](#-running)
 
 ---
 
 
 ## 📍 Overview
 
-The repository contains code for an Antichess game with various components like GUI, model training, exploration, and AlphaZero algorithm implementation. The project provides a user-friendly interface for playing Antichess against a trained Q-function model. It also includes functionalities for training an advanced AI model using self-play techniques and implementing the AlphaZero algorithm. This codebase enables users to explore and analyze data related to Antichess and provides various functionalities for game development, machine learning, and chess engine integration.
+This Repository contains two approaches to solving chess using Reinforcment Learning. The First Approach is a Deep Q-Learning approach, which is implemented on a subgame variant of chess called Antichess. In Antichess the Goal is to lose all you pieces, while your forced to take an opponent piece if there's a possibility. Since a player is more constrained, the action space is largly reduced compared to standard chess, hence even without a Monte Carlo Tree, passable Results can be achieved. Deep Learning weight are pretrained using existing games and then further trained using selfplay.
 
-The Omegazero component is a simplification of the Alphazero project. Instead of playing against itself, it plays against stockfish.
+The Second Part of the Repository Contains a Deep Q-Learning Approach combined with a Monte Carlo Tree Search. The Monte Carlo Tree Search is used to explore the action space and to find the best action to take. The Deep Q-Learning is used to evaluate the state of the game and to improve the Monte Carlo Tree Search. This approach is implemented on standard chess. Contrary to the first approach, the Deep Learning weights are not pretrained, but the agent plays against a much stronger opponent namley a Stockfish Engine which is a state of the art chess engine.
+
+Both Approaches can be tested out in a unserfriendly GUI, which allows the user to play against the trained model.
+
+*Note that Antichess and Giveaway Chess are used interchangeably and refer to the same game.*
 
 ---
 
